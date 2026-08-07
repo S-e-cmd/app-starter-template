@@ -4,16 +4,43 @@
   "purpose": "Maintainable starter templates for new applications and AI-assisted continuation work.",
   "defaultTemplate": "core",
   "templates": {
-    "core": "templates/core",
-    "cloudflare-worker": "templates/cloudflare-worker",
-    "d1": "templates/d1",
-    "sheets-gas": "templates/sheets-gas"
+    "core": {
+      "path": "templates/core",
+      "aiContext": "templates/core/ai-context.json"
+    },
+    "cloudflare-worker": {
+      "path": "templates/cloudflare-worker",
+      "aiContext": "templates/cloudflare-worker/ai-context.json",
+      "extends": ["core"]
+    },
+    "d1": {
+      "path": "templates/d1",
+      "aiContext": "templates/d1/ai-context.json",
+      "extends": ["core", "cloudflare-worker"]
+    },
+    "sheets-gas": {
+      "path": "templates/sheets-gas",
+      "aiContext": "templates/sheets-gas/ai-context.json",
+      "extends": ["core"]
+    }
   },
   "rules": {
     "development": "docs/DEVELOPMENT_RULES.md",
     "architecture": "docs/ARCHITECTURE_RULES.md",
     "ui": "docs/UI_RULES.md",
     "data": "docs/DATA_RULES.md"
+  },
+  "handoff": {
+    "generatedAppMustKeep": [
+      "ai-context.json",
+      "llms.txt",
+      "docs/ARCHITECTURE.md",
+      "docs/DATA_CONTRACT.md",
+      "docs/UI_RULES.md",
+      "docs/PROJECT_STATUS.md"
+    ],
+    "publicUrlDiscovery": "/ai-context.json",
+    "readLocalContextBeforeParentRules": true
   },
   "policies": {
     "splitByResponsibilityFromStart": true,
