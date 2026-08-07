@@ -22,6 +22,7 @@
 - `docs/UI_RULES.md`
 - `docs/PROJECT_STATUS.md`
 - `ai-context.json`
+- `llms.txt`
 
 ## 標準基盤
 
@@ -35,6 +36,10 @@
 - 空状態表示
 - モーダル
 - PC/SP向け最低限の共通CSS
+
+## テンプレートの適用
+
+ユーザーがテンプレートを選択する必要はありません。AIがアプリ要件を確認し、`manifest.json` の `selectionPolicy` に従って `core` を必ず適用し、必要な場合だけ Worker / D1 / Sheets-GAS の追加構成を組み合わせます。
 
 ## 継続ルール
 
