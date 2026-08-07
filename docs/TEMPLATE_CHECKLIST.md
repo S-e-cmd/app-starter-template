@@ -8,167 +8,185 @@
 - Repository URL / 公開URL / starter参照の存在だけで整備モードを選んでいない。
 - `direct-change / required-propagation / out-of-scope` を区別した。
 - 「改善できる」「関連している」「同じfile」「fileが長い」「将来riskがあるかもしれない」だけをscope拡大理由にしていない。
-- required-propagationは原則confirmed Evidenceを持つ。inferredなら複数の独立根拠、直接因果、可逆・非破壊・非Production Mutationの条件を満たす。
+- required-propagationは原則confirmed Evidenceを持つ。inferredなら複数独立根拠、直接因果、可逆・非破壊・非Production Mutationを満たす。
 - unknown riskをrequired-propagationへ格上げしていない。
 - `confirmed / inferred / unknown` を区別した。
-- 不要、未使用、原因、正常、安全等をEvidenceなしで断定していない。
-- tool上の実行権限とユーザーの変更authorizationを混同していない。
-- Production Mutationの対象とauthorization状態を確認した。
+- tool capabilityとuser authorizationを混同していない。
+- Production Mutation対象とauthorization状態を確認した。
 - generated / derived fileのsourceがある場合、生成物だけを手修正していない。
-- 既存仕様にないsilent fallbackを追加・使用していない。
-- documentation / runtime mismatchやblocked / unknownが今回scopeに無関係なら、記録だけして他のin-scope作業を不必要に停止していない。
-- blocked / unknown / mismatchへ依存する後続作業は、入力・契約判断が解消するまでholdした。
+- silent fallbackを追加・使用していない。
+- mismatch / blocked / unknownがscopeに無関係なら他のin-scope作業を不必要に停止していない。
 
-## authorization継承
+## authorization fingerprint
 
 `already-approved-in-current-task` を使う場合:
 
-- environmentがexact matchしている。
-- resourceは最も具体的な既知対象で正規化し、親resourceへ丸めて一致させていない。
-- operation-typeがexact matchしている。
-- target-scopeがexact matchしている。
-- filtered record集合と全record、column subsetとtable全体等を同じscopeとみなしていない。
-- 4項目のいずれかが広がる場合、新しいauthorizationとして扱った。
-- 複数operationの事前承認はfingerprintの明示列挙として保持し、「migration全体」「整備全体」等の抽象labelで未列挙操作へ拡張していない。
-- D1 migration許可を別table削除、別schema破壊、全data rewrite等へ包括継承していない。
+- environmentはexact target。
+- provider stable IDが利用可能ならresource identityに優先使用した。
+- stable IDがない場合、provider / account / project / parent hierarchyまで含めて同名resourceを区別した。
+- display nameやaliasだけで同一resourceとみなしていない。
+- alias / Binding名を同一resourceへcanonicalizeする場合、stable IDまたは実設定mappingをconfirmedした。
+- parent resourceへ丸めて一致させていない。
+- rename前後を同一identityとする場合、stable provider ID継続をconfirmedした。
+- rename authorizationをrename後の別operationへ継承していない。
+- operation-typeはverb文字列ではなくside effect / reversibility / contract boundary / security consequenceで正規化した。
+- target-scopeはexact affected set。
+- filter表記差を同一scopeにする場合、type / NULL / collation / timezone / parameter semanticsまで保ったdeterministic equivalenceを確認した。
+- dynamic time rangeやruntime parameterが変わるscopeを文字列だけで再利用していない。
+- subset / supersetを同じscopeとみなしていない。
+
+## plan authorization
+
+複数operationをまとめて承認する場合:
+
+- planにfingerprint集合を事前列挙した。
+- userが列挙済み集合を一括承認した場合、各operation前の再確認を強制していない。
+- plan名だけで未列挙operationをauthorizationしていない。
+- plan revisionでfingerprintが追加・変更された場合、新規/変更fingerprintだけ追加authorizationを求めた。
+- 既承認で未変更のfingerprintを不必要に再確認していない。
 
 ## ブートストラップ完了ゲート
 
-新規アプリでは `docs/BOOTSTRAP_PROTOCOL.md` を先に満たします。
-
 - `ai-context.json` / `llms.txt` / `docs/ARCHITECTURE.md` / `docs/DATA_CONTRACT.md` / `docs/UI_RULES.md` / `docs/PROJECT_STATUS.md` がある。
-- `ai-context.json` に starter schemaVersion、bootstrap時template commit SHA、bootstrap時revision、current parent manifest URLがある。
-- top-level `schemaVersion` はai-context文書schema、`starter.schemaVersion` はparent starter manifest schemaとして別概念で扱っている。
-- 2つのschemaVersion数値が違うだけでtemplate drift / schema mismatchと誤判定していない。
-- `schemaVersionMeaning` が各versionの意味を明示している。
-- public `ai-context.json` / `llms.txt` にSecret、内部専用URL、private identifier、個人情報、未修正脆弱性詳細等が含まれていない。
-- public contextへ追加するfieldは、field名だけでなく実際の値がpublic-safeか確認した。
-- repository内部handoffを無加工でpublic contextへコピーしていない。
-- 既存コードがある場合、bootstrapだけを理由にrefactor・rename・移動・削除していない。
-- 後から変更コストの高いvisibility、auth、永続保存先、個人情報保存、課金service、公開範囲等を根拠なく推測していない。
+- ai-contextにstarter schemaVersion、bootstrap template commit SHA / revision、current parent manifest URLがある。
+- top-level `schemaVersion` と `starter.schemaVersion` を別概念として扱っている。
+- `schemaVersionMeaning` が一致する対象同士だけ比較している。
+- parent starter schemaが新しくなっただけでlocal ai-context schema mismatchと誤判定していない。
+- 古いappがbootstrap時starter versionを保持していることだけでlocal migrationを強制していない。
+- public ai-context / llms.txtにSecret、internal-only URL、private identifier、個人情報、未修正脆弱性詳細等がない。
+- public fieldはfield名だけでなく実値を確認した。
+- bootstrapだけを理由に既存codeをrefactor / rename / move / deleteしていない。
 
 ## 通常の機能追加・修正
 
-- `FEATURE_CHANGE_PROTOCOL.md` を使用した。
-- 直接変更とEvidence条件を満たすrequired-propagationだけを変更した。
-- 類似機能・共通部品を確認したが、再利用のために不要な結合を増やしていない。
-- 無関係なrefactor・cleanupを混在させていない。
+- direct-changeとEvidence条件を満たすrequired-propagationだけを変更した。
+- 類似部品再利用で不要な結合を増やしていない。
+- 無関係refactor / cleanupを混在させていない。
 - API / data contract / LocalStorage key / D1 schema / Sheets列 / Binding等を未許可で壊していない。
-- 検証中に見つけた無関係問題は別taskへ回した。
+- 無関係問題は別taskへ回した。
 
 ## 既存アプリ非破壊整備
 
 - template準拠を目的にしていない。
-- `ARCHITECTURE_RULES.md` の新規アプリ用directory例へ既存アプリを寄せていない。
+- 新規app用directory例へ既存appを寄せていない。
 - 整備候補がscope外なら記録だけにした。
-- ユーザーが「完了まで」「ロードマップ通り」等の継続を既に許可している場合、機械的に毎batch停止していない。
-- scope拡大、Production Mutation、新たな高リスク操作、実質的な方針選択が必要な場合は該当部分だけ停止してauthorization / choiceを確認した。
-- hold対象の契約・入力に依存する後続作業も停止し、独立作業だけ継続した。
+- 既に「完了まで」「ロードマップ通り」等の継続指示がある場合、毎batch停止していない。
+- scope拡大 / Production Mutation / 高リスク操作 / 実質的方針選択が必要な該当部分だけ停止した。
+
+## dependent hold
+
+hold伝播が必要な場合:
+
+- 後続作業がblocked inputを直接使用する、または
+- blocked contractの結果で実装内容が変わる、または
+- safety / authorization判断がblocked結果に依存する。
+
+次だけでholdを広げていない:
+
+- 同じfile。
+- 同じscreen。
+- 同じfeature group。
+- 間接的に関係する可能性。
+- 念のため。
+
+独立したin-scope作業は継続した。
 
 ## 障害・復旧
 
-- code / deployment / environment / data-schema / external API compatibilityを必要に応じて別軸で確認した。
-- last known goodを単なる直前commitとみなしていない。
-- 原因不明のまま推測修正を積み重ねていない。
-- rollback前にcode-data互換、environment互換、migration後data影響、失われる正常変更、復元targetの存在、external API互換を確認した。
-- rollbackがより危険なら、根拠のある限定roll-forwardを選択可能としている。
+- code / deployment / environment / data-schema / external API compatibilityを必要に応じ別軸で確認した。
+- last known goodを直前commitだけで決めていない。
+- 原因不明の推測修正を積み重ねていない。
+- rollback前に互換・data影響・失われる正常変更・restore target等を確認した。
+- rollbackが危険なら根拠ある限定roll-forwardを選択可能としている。
 - force push / history rewriteを通常復旧手段にしていない。
-- HTTP 200 / deploy成功 / 画面表示だけで復旧成功とみなしていない。
+- HTTP 200 / deploy成功だけで復旧成功としていない。
 
 ## security containment
 
-- 漏えい・不正アクセスがunknownなら、AIの自律判断だけでcredential失効等のProduction Mutationを実施していない。
-- confirmedまたは直接露出を示す強いEvidenceがある場合のみ、自律的な緊急containment候補として扱った。
-- 「確認して」「怪しい」だけをtoken失効authorizationとみなしていない。
-- ユーザーが「token Xを失効」のように具体的mutationを明示した場合、leak Evidenceがunknownでもnamed targetへのauthorizationとして扱えることを妨げていない。
-- その場合もleak Evidence自体をconfirmedへ格上げしていない。
-- ユーザーが明示したcontain / revoke / disable対象、または事前runbookで定義されたresource / operation / scopeだけにauthorizationを限定した。
-- containment authorizationを恒久変更や別resourceへ拡張していない。
+- unknown leakでAIの自律判断だけによるcredential mutationをしていない。
+- confirmed / direct exposure Evidenceのみ自律containment候補として扱った。
+- userが具体的にtoken X revokeを指示した場合、Evidence unknownでもXへのauthorizationとして扱えることを妨げていない。
+- その指示をleak confirmedへ変換していない。
+- authorizationを別token / account / Bindingへ広げていない。
 
 ## データ移行・実データ
 
-- code / schema / actual data / environment settingsのbackup・recoveryを別々に確認した。
-- Git historyだけを実data backupとみなしていない。
-- 実data検証は `read-only → copy/snapshot/staging → new isolated test record → modify existing production data` の順で安全側を優先した。
-- 既存production実data変更はoperation-specific authorizationなしに行っていない。
-- migration対象範囲、旧形式残存、rollback要否、旧client / external consumerを確認するまで互換処理を削除していない。
+- code / schema / actual data / environment settingsのrecoveryを別々に確認した。
+- Git historyだけをactual data backupとみなしていない。
+- `read-only → copy/snapshot/staging → new isolated test record → modify existing production data` の順を優先した。
+- existing production data変更はoperation-specific authorizationなしに行っていない。
+- migration完了条件まで旧互換処理を削除していない。
 
-## 環境・Production Mutation
+## 環境・Production Mutation / resource creation
 
 - 実稼働設定 → deployment metadata → production branch設定file → handoff docs → README → inference の順を基準に確認した。
-- inferenceを設定変更の根拠にしていない。
-- Production Mutationを `not-authorized / authorized-for-this-operation / already-approved-in-current-task` で扱った。
-- 広い「本番も対応」依頼をSecret削除・schema破壊・URL変更等の包括許可とみなしていない。
-- 権限 / role / ACL / access control変更をProduction Mutationとして扱った。
+- inferenceを設定変更根拠にしていない。
+- permission / role / ACL / access control変更をProduction Mutationとして扱った。
 - cron / trigger / scheduled job / consumer変更をProduction Mutationとして扱った。
-- production import / bulk create / bulk rewriteをProduction Mutationとして扱った。
-- 新規resource作成でも既存Binding / routing / storage / targetが切り替わる場合はProduction Mutationとして扱った。
+- production import / bulk rewrite等をProduction Mutationとして扱った。
+- 新resource作成で既存Binding / routing / storage / targetが切り替わる場合はProduction Mutationとして扱った。
+- 独立resource作成でも、paid cost / public exposure / privileged access / production data copy / significant name reservation / retention obligationがある場合は無害なcode edit扱いにしていない。
+- tool capabilityだけでresource作成をauthorization済みとみなしていない。
 
 ## 削除・rename
 
 - repo内部参照ゼロだけで未使用と断定していない。
-- external consumer確認不能な公開API / URL / storage key / GAS function等を「利用状況不明」と扱った。
-- 単一renameでもAPI route、Binding、storage key、exported function、GAS function等のcontract boundaryは破壊的変更として扱った。
+- external consumer確認不能な公開contractをusage unknownとして扱った。
+- contract boundary renameは件数に関係なくbreaking riskとして扱った。
 
 ## 依存更新
 
-- direct dependencyだけでなくtransitive dependencyとlockfile差分を確認した。
-- major updateを通常機能追加と混在させていない。
-- 重大脆弱性対応ではsecurity containment・緊急updateを優先しつつ、互換・rollback評価を省略していない。
+- direct / transitive dependencyとlockfile差分を確認した。
+- major updateを通常feature workと混在させていない。
+- security updateでも互換・rollback評価を省略していない。
 
 ## UI
 
 - 見栄え改善で情報量・一覧性・操作数・主要導線を悪化させていない。
 - SP対応のためPC版を悪化させていない。
-- 画面幅だけを理由に主要機能を削除していない。
+- 画面幅だけで主要機能を削除していない。
 - 対象に応じ、押下領域、scroll、overflow、modal close、focus、keyboard、gesture、fixed/sticky、z-index等を確認した。
 
 ## build number
 
-- production executable code変更はapp固有policyまたは `YYYYMMDD-NN` 共通policyに従って更新した。
-- CSS等のproduction UI asset変更は更新対象として扱った。
-- runtimeが読むstatic JSON / config等で表示・挙動・API responseが変わる場合は更新対象として扱った。
-- internal APIのみでもproduction codeのresponse / side effect / contract behaviorが変わる場合は更新対象として扱った。
+- production executable code / UI asset / runtime behavior / API behaviorが変わる場合はversion policyに従った。
 - docs / READMEのみなら原則buildを上げていない。
-- Secret rotation等のenvironment-only変更でartifact・user behaviorが変わらない場合は、共通policy上は原則build不要とした。
-- rollback / roll-forwardで公開内容が変わった場合、過去build番号を新変更として再利用していない。
-- app固有version policyが明示されている場合はそちらを優先した。
+- environment-only変更でartifact・user behaviorが変わらない場合は原則build不要とした。
+- rollback / roll-forwardで公開内容が変われば新buildとした。
+- app固有version policyがあれば優先した。
 
-## 検証と完了状態
+## verificationと完了状態
 
-重要項目を `verified / blocked / not-applicable` で扱う。
-
-blockedの場合:
-
-- 実施不能理由を記録した。
-- 代替確認を記録した。
-- 残存riskを記録した。
-- 今回scopeと無関係なら他のin-scope作業を継続した。
-- direct-changeの成功、安全、authorization判断に必要なら該当部分だけ保留した。
-- blocked判断を入力・契約として依存する後続作業も保留した。
+- verification criteriaを固定列挙だけでなく、現在のdirect-changeの目的状態から導出した。
+- adjacent regression checkは因果的に関連する範囲だけ追加した。
+- requested outcomeと無関係な独立機能を完了条件へ勝手に追加していない。
+- 保存修正なら保存 / 必要なreload persistenceを確認した。
+- sync修正なら保存成功だけで完了にせず、sync目的状態まで確認した。
+- blockedの場合、理由・代替確認・residual riskを記録した。
+- partial verificationを未確認の目的状態へ一般化していない。
 
 全体状態:
 
-- **完了** — 必要な変更と検証が完了。
-- **作業完了 / 検証保留** — 変更は完了したが必要検証の一部がblocked。
+- **完了** — direct-changeから導出した必要変更と検証が完了。
+- **作業完了 / 検証保留** — 変更は完了したが必要検証の一部blocked。
 - **未完了** — 実装・復旧・移行・設定変更そのものに残作業がある。
-
-必要に応じ、implementation / deployment / verification / documentation を `complete / pending / not-applicable` で記録します。
-
-commit成功、deploy成功、HTTP successだけでは完了扱いにしません。partial verificationを未確認の目的状態へ一般化しません。
 
 ## 解釈一致テスト
 
-大きなpolicy変更後またはrule矛盾レビュー時は `docs/POLICY_INTERPRETATION_CASES.md` を使います。
+大きなpolicy変更後またはrule矛盾review時は `docs/POLICY_INTERPRETATION_CASES.md` を使います。
 
-- authorization fingerprintの正規化とexact match。
-- resource階層 / record集合 / 複数operation事前承認。
-- inferred / unknown riskによるscope拡大。
-- security containment Evidenceと明示credential authorizationの分離。
-- documentation/runtime mismatch。
-- blocked / unknownと依存作業のhold範囲。
-- build number境界。
-- schemaVersion意味区分。
+重点:
+
+- stable ID / account / project / alias / renameによるresource identity。
+- equivalent / non-equivalent / dynamic target-scope。
+- operation side effect normalization。
+- enumerated plan approvalとplan revision。
+- inferred / unknown riskのscope拡大。
+- security Evidenceとexplicit authorization。
+- dependent holdの不足・過大伝播。
+- direct-change別のcompletion criteria。
+- independent resource creation risk。
+- schema version drift。
 - silent fallback / fake success / partial verification。
 
-同じcaseで別AIがscope、Evidence、authorization、Production Mutation、continuation、Protocolについて大きく異なる結論を出せる場合は、rule不足または表現曖昧として扱います。
+同じcaseで別AIのscope、Evidence、authorization、Production Mutation、continuation、Protocolが大きく割れる場合は、rule不足または表現曖昧として扱います。
