@@ -116,12 +116,14 @@ Evidence stateはscope、authorization、rollback、security containmentへ引�
 
 既存productionへ接続されない独立resource作成は、それだけで既存production mutationとはみなしません。ただし次のside effectがある場合は無害なcode editと同列に扱わず、Environment Change / Creation Flow側でauthorizationまたはuser choiceを確認します。
 
-- paid / metered cost。
+- paid / metered cost、quotaの有意な消費、または後から自動課金へ移る条件。
 - external public exposure。
-- privileged access / new permissions。
+- credential発行、privileged access / new permissions。
 - production data copy / import。
 - operationally significant name reservation。
-- retention / compliance obligation。
+- retention / audit / compliance obligation。
+
+新規appのCreation Flow等で、具体的なresource構成と上記risk特性まで既に提示・承認されている場合は、その承認済み構成内の作成をresourceごとに再確認する必要はありません。承認後にcost、公開範囲、権限、data copy等のmaterial riskが増えた場合だけ追加判断します。
 
 Tool capabilityはuser authorizationを意味しません。
 
@@ -131,7 +133,7 @@ Tool capabilityはuser authorizationを意味しません。
 - **authorized-for-this-operation** — 当該operationを具体的に許可済み。
 - **already-approved-in-current-task** — 同一の正規化authorization fingerprintを持つoperationが現在taskで既に許可済み。
 
-fingerprintは最低限次の4項目です。
+fingerprintは最低限次の4項目です。side effectを変えるoption / flagはoperation-typeまたはtarget-scopeの正規化内容へ含め、無視しません。
 
 ### environment
 
@@ -143,7 +145,13 @@ provider側のstable identifierが利用可能ならそれを優先します。�
 
 stable identifierがない場合は、provider / account / project / parent hierarchy等、同名resourceを区別するために必要な階層付きidentityを使います。
 
+**authorization resource identityは「同じ業務上の役割」ではなく、実際のresource identityです。** clone、restore、delete→recreate、replacement、provider migration等でstable IDが変わった場合、「後継resource」「同じ名前」「同じ用途」だけを理由に既存authorizationを継承しません。新resourceへの操作が既存planで明示承認されている場合だけ、その列挙fingerprintとして扱います。
+
+同名でdelete→recreateされたresourceは、新しいstable IDなら別resourceです。逆に表示名が変わってもstable IDが同一とconfirmedできるrenameでは、resource identity自体は継続できます。
+
 alias、Binding名、表示名が同一resourceを指すと扱えるのは、stable IDや実設定でmappingをconfirmedできる場合だけです。「意味的に同じ」だけでは一致しません。
+
+confirmed mappingにも鮮度があります。Binding / alias / environment設定の変更後、または実行対象identityに影響する変更が入った後は古いmappingをreuseせず再確認します。長時間作業や高リスクmutationでは、実行直前の実設定でmappingがまだ有効か確認します。
 
 renameについて:
 
@@ -162,6 +170,8 @@ renameについて:
 
 場合は別operationです。
 
+同じverbでも、`dry-run=false`、`cascade=true`、`overwrite=true`、`force=true`、`delete-source-after-copy=true`、`replace-existing=true` 等のoptionでside effect / reversibility / affected scopeが変わるなら、authorization上は同一operationとして扱いません。副作用を変えない表示・説明用optionだけなら別authorizationに分割しません。
+
 update / rewrite / backfill、rotate / replace / revoke、bind / switch、migrate / column-add、create / provision等は、単なる語感で同一operationへまとめません。明示mappingがありside effectも同一の場合だけ同じcanonical operationとして扱えます。
 
 ### target-scope
@@ -177,15 +187,16 @@ exact affected subsetを使います。column、field、route、setting、job、
 
 は、同じparser / type / NULL / collation等のsemanticsで単なるAND順序差と確認できる場合は同scopeへcanonicalize可能です。
 
-一方、次を推測で同一扱いしません。
+一方、OR / NOT / IN、NULL、implicit cast、collation、timezone、floating point、pagination / cursor、server-side implicit filter、row-level security等が結果集合へ影響し得て同値を決定論的に確認できない場合は、無理にcanonicalizeしません。
 
-- NULL semanticsが違い得る。
-- string / number型変換がある。
-- timezone / collation差がある。
-- dynamic `NOW()` / relative time range等で実行時集合が変わる。
-- queryの実行時parameterが未固定。
+Dynamic scopeは2種類を区別します。
 
-filtered subsetとall records、subsetとsupersetは別scopeです。dynamic scopeのauthorization reuseには、実行時の具体的bounds / parametersが同じである必要があります。
+- **concrete-set authorization** — 特定record ID、snapshot、具体的time bounds等の確定集合を許可。集合が変わればreuseしない。
+- **predicate authorization** — ユーザーが「execution時にこの条件へ一致する全record」を明示的に許可。normalized predicate、parameter、evaluation semantics、environmentをfingerprintへ含め、同じpredicateの実行時集合が増減すること自体は新authorizationを要求しない。
+
+`status=pending`、未処理record、active user、cursor以降等をどちらとして承認したかを曖昧にしません。predicate authorizationでもquery条件やRLS、implicit filter、cursor基準等が変われば別scopeです。
+
+filtered subsetとall records、subsetとsupersetは別scopeです。
 
 ## 10. plan単位のauthorization
 
@@ -193,7 +204,10 @@ filtered subsetとall records、subsetとsupersetは別scopeです。dynamic sco
 
 - plan提示時に各fingerprintを列挙する。
 - ユーザーがその列挙済みplan全体を承認 → 列挙fingerprintはauthorized。
-- 実施途中でfingerprintが追加・変更された → 新規または変更fingerprintだけ追加authorizationが必要。
+- plan名や`R1`等のrevision labelはmetadataであり、authorization identityの正本ではない。
+- fingerprint集合が同じで説明文・並び順・plan名だけ変わった → 原則として再authorization不要。
+- fingerprintが追加・削除・変更された → 新規または変更fingerprintを再判定する。
+- 同じplan名 / revisionを使い続けてもfingerprint集合が変わればauthorizationは自動継承しない。
 - 未変更fingerprintを毎operation再確認する必要はない。
 - 「migrationに必要な操作全部」「このplan一式」だけで、未列挙operationまで承認済みとみなさない。
 
@@ -275,10 +289,13 @@ HTTP 200、commit成功、deploy成功、API応答、画面表示だけではfun
 
 検証項目は固定チェックリストだけで決めず、**現在のdirect-changeの完了条件から導出**します。
 
+1つの依頼に複数のdirect-change outcomeがある場合は、それぞれの状態を分けて持ちます。
+
 例:
 
-- direct-changeが「保存できない問題を直す」 → 保存・必要なreload persistenceが完了条件。別端末同期は、それが保存仕様の一部または今回変更による回帰riskと確認されない限り独立条件。
-- direct-changeが「端末間同期を直す」 → 保存だけ成功しても不十分。別端末同期の目的状態まで必要。
+- 「保存と同期を直す」→ 保存verified、同期blockedなら、保存部分はverifiedだが依頼全体はcompleteではない。必要に応じ `work-complete-verification-pending` とする。
+- 「保存できない問題を直す」→ 保存・必要なreload persistenceが完了条件。別端末同期は、それが保存仕様の一部または今回変更による回帰riskと確認されない限り独立条件。
+- 「端末間同期を直す」→ 保存だけ成功しても不十分。別端末同期の目的状態まで必要。
 
 隣接回帰確認は因果的に関係する範囲だけ追加し、無関係な機能を完了条件へ増やして過剰停止しません。
 
@@ -296,6 +313,7 @@ Inferenceは変更根拠にしません。Secret値そのものを不要に取�
 ## 21. concurrency / stale state
 
 - 長時間作業や複数変更後は重要fileのwrite直前にstate / SHAを再確認。
+- resource identityに使うalias / Binding mappingもstale stateの対象。関連environment変更後や高リスクoperation実行前に再確認する。
 - 409等では最新取得。
 - 他変更を残し、自分のdiffだけ再適用。
 - 競合解消を理由に他の正常変更を消さない。
@@ -313,6 +331,8 @@ Inferenceは変更根拠にしません。Secret値そのものを不要に取�
 数値が異なるだけでschema mismatchとはみなしません。`schemaVersionMeaning` が同じ対象同士だけを比較します。
 
 parent manifestが将来5、6へ進んでも、古いappがbootstrap時starter schema 3 / 4を保持していること自体は**version drift metadata**でありlocal schema mismatchではありません。最新親ruleは安全原則・判断補助として参照できますが、親version上昇だけで既存appを再構成しません。
+
+parent manifestにbreaking schema changeがあっても、それは「最新parentを読むためのcompatibility判断」であり、local appのstructure / data / UIを自動migrationするauthorizationにはなりません。
 
 ## 23. public ai-context safety
 
@@ -372,29 +392,39 @@ hold伝播の根拠:
 
 全体state:
 
-- **complete** — direct-changeから導出した必要な変更・検証が完了。
-- **work-complete-verification-pending** — 変更完了、必要検証の一部blocked。
+- **complete** — direct-changeから導出した全required outcomeの必要変更・検証が完了。
+- **work-complete-verification-pending** — 変更完了、required outcomeの必要検証の一部blocked。
 - **incomplete** — 実装・復旧・migration・setting変更自体に残作業。
+
+複数outcomeがある場合、outcome単位のverified / blocked / pendingを保持し、1つの成功を依頼全体へ一般化しません。
 
 必要に応じimplementation / deployment / verification / documentationも個別管理します。
 
-## 26. 解釈一致テスト
+## 26. ルール体系の収束条件
+
+新しい反例が見つかっても、まず既存のscope / Evidence / authorization / stale-state / verification / Creation Flowで判定できないか確認します。
+
+- 既存ruleで一意に近い判定ができる → 新ruleを追加せず、必要なら説明または代表caseだけ改善する。
+- 同じ概念を別名称で増やさない。
+- manifestへ自然言語Protocolを詰め込みすぎない。
+- adversarial casesは境界を代表するものを残し、同じruleを確認するだけの重複caseを無制限に増やさない。
+- 大きな抜け道がなく、別AIでも主要分類が一致する段階ではrule追加フェーズを終了し、重複整理・実アプリ適用・過剰停止確認へ移る。
+
+## 27. 解釈一致テスト
 
 `docs/POLICY_INTERPRETATION_CASES.md` で正常ケースだけでなく、意図的に逆結論を成立させようとします。
 
 重点:
 
-- stable ID / display name / alias / renameでresource identityを都合よく変えられないか。
-- logically equivalent filterを厳格すぎて別scopeにし続けないか、逆にsemantics不明なのに同scopeへまとめられないか。
-- operation verbの名称差だけで過剰分割・過剰統合しないか。
-- enumerated plan承認を効率的に継承しつつ、追加fingerprintへ勝手に拡張できないか。
-- inferred / unknownをrequired-propagationへ格上げできないか。
-- Evidence不足を理由に具体的user authorizationまで無効化できないか。
-- securityを理由に未許可mutationへ拡張できないか。
-- independent resource createを無害扱いし、高コスト・公開・権限side effectを見落とせないか。
-- blocked / mismatchを理由に全面停止できないか、逆に依存作業まで進められないか。
-- direct-changeと無関係なverificationを完了条件へ追加して過剰停止できないか。
-- partial verification / deploy / HTTP successでfake successにできないか。
+- stable IDの寿命、clone / restore / recreate / replacementでresource identityを都合よく継承できないか。
+- alias mappingがstaleなのに過去のconfirmed mappingを使い続けられないか。
+- OR / NOT / IN / NULL / collation / timezone / floating point / cursor / RLS等でtarget-scopeを無理に同値化できないか。
+- dynamic predicate authorizationとconcrete-set authorizationを混同できないか。
+- side effectを変えるoption / flagを無視してoperation authorizationを継承できないか。
+- plan label / revisionを正本としてfingerprint set変更を隠せないか。
+- dependent holdを過小・過大伝播できないか。
+- 複数direct-change outcomeの一部成功を全体成功にできないか。
+- independent resource createのquota / credential / billing / audit riskを見落とせないか、逆に承認済みCreation Flowを毎resource再確認して過剰停止できないか。
 - schemaVersionの異なる意味やversion driftをschema mismatchと混同できないか。
 
-別AIでscope / Evidence / Production Mutation / authorization / continuation / Protocolの結論が合理的に割れるcaseは、rule不足または表現曖昧のEvidenceとして扱います。
+別AIでscope / Evidence / Production Mutation / authorization / continuation / completion / Protocolの結論が合理的に割れるcaseは、rule不足または表現曖昧のEvidenceとして扱います。
