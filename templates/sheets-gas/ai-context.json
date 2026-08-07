@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "template": {
+    "name": "sheets-gas",
+    "repository": "S-e-cmd/app-starter-template",
+    "parent": "../core",
+    "manifest": "../../manifest.json"
+  },
+  "responsibilities": {
+    "entry": "gas/main.gs",
+    "config": "gas/config.gs",
+    "api": "gas/api.gs",
+    "sheets": "gas/sheet-service.gs",
+    "utils": "gas/utils.gs"
+  },
+  "maintenance": {
+    "avoidSingleLargeCodeGs": true,
+    "preferGasTriggersOverGitHubActions": true,
+    "githubActionsByDefault": false
+  }
+}
