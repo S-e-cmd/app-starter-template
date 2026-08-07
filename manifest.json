@@ -1,15 +1,19 @@
 {
   "schemaVersion": 1,
   "name": "app-starter-template",
-  "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created empty application repositories, guiding deployment, and continued maintenance.",
+  "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created application repositories, guiding deployment, and continued maintenance.",
   "defaultTemplate": "core",
   "creationFlow": {
     "required": true,
     "protocol": "docs/CREATE_AND_DEPLOY_FLOW.md",
     "guideRepositorySettingsBeforeCreation": true,
-    "populateEmptyRepositoryAfterUrlProvided": true,
+    "populateRepositoryAfterUrlProvided": true,
     "guideDeploymentAfterImplementation": true,
     "cloudflareSettingsMustBeDerivedFromActualRepository": true,
+    "existingSettingsTakePrecedence": true,
+    "fixedConfigurationValuesByDefault": false,
+    "presentConcreteSettingsToUser": true,
+    "markUnusedFieldsExplicitly": true,
     "userChoosesTemplate": false
   },
   "bootstrap": {
@@ -28,10 +32,10 @@
     "completionCheck": "docs/TEMPLATE_CHECKLIST.md"
   },
   "deploymentPolicy": {
-    "mode": "ai-populate-empty-repository",
+    "mode": "ai-populate-repository",
     "humanTemplateCopyRequired": false,
     "githubUseThisTemplateRequired": false,
-    "instruction": "First provide concrete GitHub repository creation settings. After the user provides the empty repository URL, complete the bootstrap protocol, infer the required composition, populate the starter and handoff files, and implement application-specific features. If deployment is required, inspect the actual repository configuration before giving concrete Cloudflare settings. Do not ask the user to use GitHub's Use this template flow unless they explicitly prefer it."
+    "instruction": "First derive and present concrete GitHub repository creation settings from the application requirements rather than fixed defaults. After the user provides the repository URL, complete the bootstrap protocol, infer the required composition, populate the starter and handoff files, and implement application-specific features. If deployment is required, inspect the actual repository and existing deployment configuration before giving concrete Cloudflare settings. Preserve existing project names, bindings, branches, secrets names, and deployment mechanisms unless there is a clear reason to change them. Mark unnecessary fields as empty or not required instead of making the user infer them."
   },
   "selectionPolicy": {
     "userSelectionRequired": false,
