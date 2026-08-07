@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "template": {
+    "name": "d1",
+    "repository": "S-e-cmd/app-starter-template",
+    "parents": ["../core", "../cloudflare-worker"],
+    "manifest": "../../manifest.json"
+  },
+  "responsibilities": {
+    "schema": "db/schema.sql",
+    "migrations": "db/migrations",
+    "repositories": "worker/repositories"
+  },
+  "maintenance": {
+    "migrationsRequiredForSchemaChanges": true,
+    "preserveExistingData": true,
+    "githubActionsByDefault": false
+  }
+}
