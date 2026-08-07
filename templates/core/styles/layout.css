@@ -1,0 +1,4 @@
+body { min-width: 320px; }
+.app-shell { width: min(1200px, 100%); margin: 0 auto; padding: 16px; }
+.app-stack { display: grid; gap: 16px; }
+.app-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
