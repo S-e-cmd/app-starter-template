@@ -22,7 +22,8 @@ Production Mutationの定義、authorization fingerprint、resource creation ris
 5. applicableなenvironment settings backup / 現在値記録を残す。
 6. 対象操作がProduction Mutationか中央ruleで判定する。
 7. Production Mutationならnormalized fingerprintを確認する。
-8. 独立resource作成なら、Production Mutationでなくても中央resource creation risk gateを確認する。
+8. Binding / alias等をresource identityへ解決した場合、そのmappingが現在設定に対して有効か確認する。関連設定変更後や高リスクoperation実行前はstale mappingをreuseしない。
+9. 独立resource作成なら、Production Mutationでなくても中央resource creation risk gateを確認する。
 
 広い「環境も整えて」「本番変更も含めて対応」は、個別のSecret削除、Binding改名、production branch変更、trigger追加、access control変更、Worker / Project削除等への包括authorizationではありません。
 
@@ -30,14 +31,16 @@ Production Mutationの定義、authorization fingerprint、resource creation ris
 
 新resourceが既存productionへまだ接続されていなくても、次がある場合は無害なcode editと同列に扱いません。
 
-- paid / metered cost。
+- paid / metered cost、quotaの有意な消費、または一定条件後の自動課金。
 - external public exposure。
-- privileged access / permission追加。
+- credential発行、privileged access / permission追加。
 - production data copy / import。
 - operationally significant name reservation。
-- retention / compliance obligation。
+- retention / audit / compliance obligation。
 
 該当する場合は、作成対象・side effect・費用/公開/権限/data影響を示し、現在taskでauthorizationまたはuser choiceがあるか確認します。
+
+ただし、新規appのCreation Flow等で具体的なresource構成と上記risk特性まで既に提示・承認されている場合、その承認済み構成内のresource作成を毎回再確認しません。承認後にcost、public exposure、credential / permission、data copy、retention等のmaterial riskが追加・増加した場合だけ追加判断します。
 
 resource作成authorizationと、その後のBinding / routing / storage / target切替authorizationは分離します。
 
@@ -46,6 +49,7 @@ resource作成authorizationと、その後のBinding / routing / storage / targe
 - authorization済みのfingerprint範囲だけ変更する。
 - Secret値そのものをrepositoryへ書かない。
 - resource名・Binding名・Secret名等のrenameはcontract boundaryとして影響範囲を確認する。
+- clone / restore / recreate / replacementで新しいstable resource IDになった対象へ、旧resource authorizationを「同じ用途だから」と継承しない。
 - CloudflareとGitHub等の接続先を推測で切り替えない。
 - 新しいresourceを作成する場合、既存productionのBinding / routing / storage / target切替まで許可されたとはみなさない。
 - permission / role / ACL / access control変更を通常設定編集として扱わない。
@@ -63,7 +67,7 @@ resource作成authorizationと、その後のBinding / routing / storage / targe
 - API / Binding / Secret / Variable参照が正常か。
 - access control / permissionが意図した対象だけ変わったか。
 - cron / trigger / scheduled jobが意図したschedule・targetで動作するか。
-- 新resource作成時は、意図しないpublic exposure / privileged access / production connection / data copyがないか。
+- 新resource作成時は、意図しないpublic exposure / credential issuance / privileged access / production connection / data copy / quota・billing影響がないか。
 - 自動deployや外部integrationが維持されているか。
 - 対象機能が目的状態になっているか。
 - build番号は中央build policyまたはapp固有policyと整合しているか。
@@ -75,6 +79,7 @@ blocked項目が今回の変更判断に無関係なら、他のin-scope確認�
 - 実設定を見ず固定値を案内する。
 - tool権限だけを理由にproduction設定または有料/公開/privileged resourceを作成する。
 - authorization fingerprintの一部だけ一致した別操作へ許可を継承する。
+- 古いBinding / alias mappingを、関連設定変更後もcurrent identityとして使い続ける。
 - inferenceだけを設定変更の根拠にする。
 - code側だけ変更してenvironment変更を記録しない。
 - deploy成功だけで機能成功とみなす。
@@ -82,4 +87,4 @@ blocked項目が今回の変更判断に無関係なら、他のin-scope確認�
 
 ## 記録
 
-`docs/ARCHITECTURE.md` または `docs/PROJECT_STATUS.md` に、確認した情報源、変更したenvironment項目、authorization fingerprint、resource creation side effect、維持した設定、user操作が必要だった箇所、verified / blocked項目、確認結果を記録します。
+`docs/ARCHITECTURE.md` または `docs/PROJECT_STATUS.md` に、確認した情報源、変更したenvironment項目、authorization fingerprint、resource identityの確認方法、resource creation side effect、維持した設定、user操作が必要だった箇所、verified / blocked項目、確認結果を記録します。
