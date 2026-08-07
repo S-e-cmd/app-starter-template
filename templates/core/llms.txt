@@ -1,0 +1,10 @@
+# Application Development Context
+
+When this application URL is provided for maintenance or continued development:
+
+1. Read /ai-context.json first.
+2. Read the local docs referenced by ai-context.json.
+3. Use the parent starter-template manifestUrl for shared development rules.
+4. Preserve existing behavior, data compatibility, and responsibility boundaries.
+5. Update local handoff docs in the same change when architecture, data contracts, UI constraints, or project status change.
+6. GitHub Actions are not the default automation mechanism.
