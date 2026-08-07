@@ -2,13 +2,30 @@
 
 新規アプリ作成時と継続改修時に、GitHub Actionsへ依存せずその場で確認するためのチェックリストです。
 
+## ブートストラップ完了ゲート
+
+新規アプリでは、アプリ固有機能の実装完了より先に `docs/BOOTSTRAP_PROTOCOL.md` を満たしてください。
+
+次のすべてが揃うまで初期実装完了扱いにしません。
+
+- `ai-context.json` がアプリ直下にある。
+- `llms.txt` がアプリ直下にある。
+- `docs/ARCHITECTURE.md` がある。
+- `docs/DATA_CONTRACT.md` がある。
+- `docs/UI_RULES.md` がある。
+- `docs/PROJECT_STATUS.md` がある。
+- `ai-context.json` から親テンプレートの公開 `manifest.json` へ戻れる。
+- `core` が適用されている。
+- 要件に応じた追加構成だけが適用されている。
+- 責務分割済みの基盤がある。
+
+READMEやアプリ固有コードだけが存在しても、上記が欠けていれば未ブートストラップです。
+
 ## 新規アプリ作成時
 
-- `core` が必ず適用されている。
-- 要件に応じて Worker / D1 / Sheets-GAS の追加構成だけが適用されている。
-- `ai-context.json` と `llms.txt` がアプリ直下にある。
-- `docs/ARCHITECTURE.md`、`DATA_CONTRACT.md`、`UI_RULES.md`、`PROJECT_STATUS.md` がある。
-- `ai-context.json` から親テンプレートの公開 `manifest.json` へ戻れる。
+- ユーザーへ `Use this template` を要求していない。
+- ユーザーへ CORE / Worker / D1 / Sheets-GAS の選択を要求していない。
+- AIが要件から構成を判断した。
 - `index.html` から `/ai-context.json` を発見できる。
 - ビルド番号が `YYYYMMDD-NN` 形式で画面と設定に反映されている。
 - UI、通信、保存、状態管理、業務処理が責務別に分離されている。
