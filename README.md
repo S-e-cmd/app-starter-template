@@ -35,6 +35,8 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 - visibility、auth、永続保存先、個人情報保存、課金service、外部公開範囲等の高コスト事項は、要件から明確でない場合に推測で固定しない。
 - Cloudflare等の設定値は実repository・実設定を確認してから案内。
 
+`ai-context.json` のtop-level `schemaVersion` と `starter.schemaVersion` は別概念です。前者はai-context文書自身、後者は参照するparent starter manifestのschema versionを表します。数値が違うだけでtemplate driftやschema mismatchとはみなしません。
+
 既存アプリに `ai-context.json` がないことだけを理由に新規bootstrap扱いしません。bootstrap不足を補うだけの作業で既存codeを勝手に分割・rename・移動しません。
 
 ## 更新
@@ -57,6 +59,7 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 - 新規アプリ用directory例へ既存アプリを無理に寄せない。
 - ユーザーが「完了まで」「ロードマップ通り」等を既に明示している場合、当初scope内の安全なbatchで毎回停止しない。
 - scope拡大、Production Mutation、新たな高リスク操作、実質的な方針選択が必要な場合に該当部分だけ停止する。
+- blocked / unknown / mismatchに依存する後続作業もholdするが、独立したin-scope作業は継続する。
 - 選択肢が必要な場合だけ `docs/BATCH_COMPLETION_CHOICES.md` を使用する。
 
 ## 障害復旧
@@ -76,8 +79,20 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 
 - tool capability ≠ user authorization。
 - authorizationは `not-authorized / authorized-for-this-operation / already-approved-in-current-task` で扱う。
-- `already-approved-in-current-task` は `environment / resource / operation-type / target-scope` が一致する場合だけ継承可能。
+- `already-approved-in-current-task` は `environment / resource / operation-type / target-scope` の正規化fingerprintがexact matchする場合だけ継承可能。
+- resourceは最も具体的な既知対象を使い、tableをdatabaseへ、SecretをProjectへ等の親resourceへの丸めで一致させない。
+- filtered record集合と全record、column subsetとtable全体等は同じtarget-scopeとみなさない。
+- 複数operationの事前承認は明示されたfingerprint列挙として扱い、「migration全体」等の抽象labelで未列挙操作へ拡張しない。
 - 「本番も含めて対応」等の広い依頼は、個別の破壊操作への包括許可ではない。
+
+## security containment
+
+Evidence条件とuser authorizationは別軸です。
+
+- 漏えいEvidenceがunknownなら、AIが自律的にtoken失効等を実行する根拠にはしない。
+- ただしユーザーが「token Xを今すぐ失効」のように具体的なcredential mutationを明示した場合、そのnamed targetのauthorizationとして扱える。
+- その場合も漏えいEvidence自体をconfirmedへ格上げしない。
+- named target以外のtoken / account / Bindingへauthorizationを広げない。
 
 ## 共通安全ルール
 
@@ -86,7 +101,7 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 - scope 3区分とrequired-propagation Evidence条件。
 - Evidence Rule。
 - 通常仕様の情報源優先順位と安全停止条件の分離。
-- Production Mutationとauthorization fingerprint。
+- Production Mutationと正規化authorization fingerprint。
 - security containmentとauthorizationの境界。
 - 実data検証の段階。
 - code / schema / actual data / environment backupの分離。
@@ -96,7 +111,7 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 - No Silent Fallback Rule。
 - No Fake Success Rule。
 - stale-state / SHA競合対応。
-- 親template version drift。
+- 親template version driftとschemaVersion意味区分。
 - public ai-context安全基準。
 - build number policy。
 - `verified / blocked / not-applicable` と完了状態。
@@ -131,4 +146,4 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 
 これらのdirectory構成は新規アプリ向けです。既存アプリへの変更要求ではありません。
 
-GitHub Actionsは標準では使用しません.
+GitHub Actionsは標準では使用しません。
