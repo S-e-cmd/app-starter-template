@@ -3,6 +3,16 @@
   "name": "app-starter-template",
   "purpose": "Maintainable starter templates for new applications and AI-assisted continuation work.",
   "defaultTemplate": "core",
+  "selectionPolicy": {
+    "userSelectionRequired": false,
+    "instruction": "Infer the required template composition from the application requirements. Always start with core and add only the extensions actually needed.",
+    "rules": {
+      "core": "Always apply.",
+      "cloudflare-worker": "Add when server-side HTTP/API processing or Cloudflare Worker functionality is required.",
+      "d1": "Add when Cloudflare D1 persistence is required. Also apply cloudflare-worker.",
+      "sheets-gas": "Add when Google Sheets or Google Apps Script integration is required."
+    }
+  },
   "templates": {
     "core": {
       "path": "templates/core",
@@ -28,7 +38,8 @@
     "development": "docs/DEVELOPMENT_RULES.md",
     "architecture": "docs/ARCHITECTURE_RULES.md",
     "ui": "docs/UI_RULES.md",
-    "data": "docs/DATA_RULES.md"
+    "data": "docs/DATA_RULES.md",
+    "validation": "docs/TEMPLATE_CHECKLIST.md"
   },
   "handoff": {
     "generatedAppMustKeep": [
