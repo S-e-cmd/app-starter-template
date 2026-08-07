@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "schemaVersionMeaning": "app-starter-manifest-schema",
   "name": "app-starter-template",
   "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created application repositories, guiding deployment, non-destructive existing-app alignment, post-launch feature changes, high-risk recovery and migration work, and continued maintenance.",
@@ -87,9 +87,39 @@
     "authorizationFingerprintFields": ["environment", "resource", "operation-type", "target-scope"],
     "authorizationFingerprintNormalization": {
       "environment": "Use the exact execution environment or deployment target; production and staging never match implicitly.",
-      "resource": "Use the most specific known canonical resource identity. Do not replace a table, sheet, secret, binding, job, or child resource with its parent database, project, account, or service merely to create a match.",
-      "operation-type": "Use one concrete mutation verb/category. create, update, delete, migrate, import, rewrite, permission-change, schedule-change, bind, unbind, rotate, revoke and switch are not interchangeable unless the user explicitly approved each listed operation.",
-      "target-scope": "Use the exact named fields, columns, routes, records/filter set, settings, jobs, or other affected subset. A filtered record set does not match all records; a column subset does not match the whole table."
+      "resource": "Prefer a provider stable identifier when available. Otherwise use the most specific hierarchical identity including provider/account/project context needed to disambiguate same-named resources. A display name, alias, binding name, or parent resource may identify the same resource only when that mapping to the same stable identity is confirmed; semantic similarity alone is insufficient.",
+      "operation-type": "Normalize by concrete side effect, not wording alone. Different side effects, reversibility, contract boundaries, or security consequences are separate operations. Synonyms may share a canonical operation only when an explicit mapping shows the same side effect.",
+      "target-scope": "Use the exact affected fields, columns, routes, records/filter set, settings, jobs, or other subset. Equivalent syntax may normalize to the same scope only when equivalence is deterministically established without changing type, NULL, collation, timezone, dynamic-time, or runtime-set semantics. Supersets never match."
+    },
+    "resourceIdentityPolicy": {
+      "preferProviderStableIdentifierWhenAvailable": true,
+      "fallbackIdentityMustIncludeDisambiguatingProviderAccountProjectHierarchy": true,
+      "sameDisplayNameDoesNotImplySameResource": true,
+      "aliasOrBindingMayResolveToSameResourceOnlyWithConfirmedMapping": true,
+      "renameWithSameStableProviderIdMayPreserveResourceIdentity": true,
+      "renameWithoutStableIdentityDoesNotAutomaticallyPreserveAuthorization": true,
+      "renameOperationAuthorizationDoesNotAuthorizePostRenameOperations": true
+    },
+    "targetScopeNormalizationPolicy": {
+      "deterministicCanonicalizationAllowed": true,
+      "commutativeFilterReorderingMayMatchOnlyWhenParserAndSemanticsAreKnown": true,
+      "typeNullCollationTimezoneOrDynamicSemanticsMustBePreserved": true,
+      "dynamicOrExecutionTimeScopeMustBeBoundedForAuthorizationReuse": true,
+      "semanticGuessingDoesNotCreateScopeMatch": true,
+      "supersetOrSubsetDoesNotMatchUnlessThatExactSetWasApproved": true
+    },
+    "operationNormalizationPolicy": {
+      "canonicalizeBySideEffectNotVerbSpelling": true,
+      "differentSideEffectsAreDifferentOperations": true,
+      "differentReversibilityOrContractBoundaryIsEvidenceOfDifferentOperation": true,
+      "doNotMergeOperationsBecauseTheyOccurInOneMigrationOrPlan": true
+    },
+    "planAuthorizationPolicy": {
+      "enumeratedFingerprintSetMayBeApprovedInOneUserAction": true,
+      "approvedPlanMustRecordExactFingerprintSet": true,
+      "planRevisionOrFingerprintSetChangeRequiresAuthorizationForNewOrChangedFingerprints": true,
+      "planNameOrNaturalLanguageLabelAloneDoesNotAuthorizeUnenumeratedOperations": true,
+      "unchangedEnumeratedFingerprintsDoNotRequirePerOperationReconfirmation": true
     },
     "mostSpecificKnownResourceRequired": true,
     "parentResourceMustNotSubstituteForChildResource": true,
@@ -116,6 +146,21 @@
     ],
     "irreversibleOrHardToRecoverRequiresOperationSpecificAuthorization": true,
     "requireImpactAndRecoveryPlanBeforeExecution": true
+  },
+  "resourceCreationPolicy": {
+    "independentResourceCreationIsNotAutomaticallyExistingProductionMutation": true,
+    "creationStillRequiresRiskClassification": true,
+    "authorizationOrUserChoiceRequiredWhenCreationIntroduces": [
+      "paid-or-metered-cost",
+      "external-public-exposure",
+      "privileged-access-or-new-permissions",
+      "production-data-copy-or-import",
+      "globally-or-operationally-significant-name-reservation",
+      "binding-routing-storage-or-target-switch",
+      "material-retention-or-compliance-obligation"
+    ],
+    "useEnvironmentChangeOrCreationFlowForIndependentResourceSetup": true,
+    "toolCapabilityDoesNotAuthorizeResourceCreation": true
   },
   "securityContainmentPolicy": {
     "unknownLeakDoesNotAuthorizeAutonomousCredentialMutation": true,
@@ -159,7 +204,16 @@
     "blockedOrUnknownDoesNotAutomaticallyStopUnrelatedInScopeWork": true,
     "blockOnlyAffectedDecisionWhenNeededForSuccessSafetyOrAuthorization": true,
     "dependentWorkMustAlsoHoldWhenItsInputsOrContractDecisionAreBlocked": true,
+    "holdPropagationRequiresConcreteDependency": [
+      "directly-consumes-blocked-input",
+      "implementation-varies-with-blocked-contract-result",
+      "safety-or-authorization-decision-depends-on-blocked-result"
+    ],
+    "same-file-screen-feature-group-or-possible-relationAloneDoesNotPropagateHold": true,
     "independentInScopeWorkMayContinue": true,
+    "completionCriteriaMustBeDerivedFromCurrentDirectChangeOutcome": true,
+    "verificationMayIncludeAdjacentRegressionCriteriaOnlyWhenCausallyRelevant": true,
+    "unrequestedIndependentCapabilityDoesNotBecomeCompletionRequirementWithoutEvidence": true,
     "overallStates": ["complete", "work-complete-verification-pending", "incomplete"],
     "components": ["implementation", "deployment", "verification", "documentation"],
     "componentStates": ["complete", "pending", "not-applicable"],
@@ -223,7 +277,9 @@
     "aiContextTopLevelSchemaVersionMeans": "ai-context-document-schema",
     "aiContextStarterSchemaVersionMeans": "parent-starter-manifest-schema",
     "differentSchemaVersionNumbersAcrossTheseFieldsAreNotMismatchByThemselves": true,
-    "compareVersionsOnlyWhenSchemaVersionMeaningMatches": true
+    "compareVersionsOnlyWhenSchemaVersionMeaningMatches": true,
+    "newerParentStarterSchemaIsVersionDriftMetadataNotAutomaticLocalSchemaMismatch": true,
+    "olderGeneratedAppMayRetainBootstrapStarterSchemaUntilItsLocalContextIsIntentionallyUpdated": true
   },
   "templateDriftPolicy": {
     "generatedAppMustRecordStarterSchemaVersion": true,
@@ -289,7 +345,7 @@
     "markRecommendedChoice": true,
     "continueChoiceMustNameNextBatch": true,
     "prioritizeAnotherAreaMustExplainWhatUserCanSpecify": true,
-    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. If the user already instructed the AI to continue through the roadmap, finish the stated scope, or process remaining stabilization work, continue through safe in-scope batches without forcing a choice after every batch. Pause only the affected part and any work that depends on its unresolved contract/input when scope expands, a new destructive/production mutation needs authorization, a high-risk operation requires specific approval, or the user must choose between materially different directions."
+    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. If the user already instructed the AI to continue through the roadmap, finish the stated scope, or process remaining stabilization work, continue through safe in-scope batches without forcing a choice after every batch. Pause only the affected part and work with a concrete dependency on its unresolved contract/input when scope expands, a new destructive/production mutation needs authorization, a high-risk operation requires specific approval, or the user must choose between materially different directions."
   },
   "featureChange": {
     "enabled": true,
