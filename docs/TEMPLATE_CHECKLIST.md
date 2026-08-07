@@ -17,16 +17,19 @@
 - generated / derived fileのsourceがある場合、生成物だけを手修正していない。
 - 既存仕様にないsilent fallbackを追加・使用していない。
 - documentation / runtime mismatchやblocked / unknownが今回scopeに無関係なら、記録だけして他のin-scope作業を不必要に停止していない。
+- blocked / unknown / mismatchへ依存する後続作業は、入力・契約判断が解消するまでholdした。
 
 ## authorization継承
 
 `already-approved-in-current-task` を使う場合:
 
-- environmentが同じ。
-- resourceが同じ。
-- operation-typeが同じ。
-- target-scopeが同じ。
+- environmentがexact matchしている。
+- resourceは最も具体的な既知対象で正規化し、親resourceへ丸めて一致させていない。
+- operation-typeがexact matchしている。
+- target-scopeがexact matchしている。
+- filtered record集合と全record、column subsetとtable全体等を同じscopeとみなしていない。
 - 4項目のいずれかが広がる場合、新しいauthorizationとして扱った。
+- 複数operationの事前承認はfingerprintの明示列挙として保持し、「migration全体」「整備全体」等の抽象labelで未列挙操作へ拡張していない。
 - D1 migration許可を別table削除、別schema破壊、全data rewrite等へ包括継承していない。
 
 ## ブートストラップ完了ゲート
@@ -35,6 +38,9 @@
 
 - `ai-context.json` / `llms.txt` / `docs/ARCHITECTURE.md` / `docs/DATA_CONTRACT.md` / `docs/UI_RULES.md` / `docs/PROJECT_STATUS.md` がある。
 - `ai-context.json` に starter schemaVersion、bootstrap時template commit SHA、bootstrap時revision、current parent manifest URLがある。
+- top-level `schemaVersion` はai-context文書schema、`starter.schemaVersion` はparent starter manifest schemaとして別概念で扱っている。
+- 2つのschemaVersion数値が違うだけでtemplate drift / schema mismatchと誤判定していない。
+- `schemaVersionMeaning` が各versionの意味を明示している。
 - public `ai-context.json` / `llms.txt` にSecret、内部専用URL、private identifier、個人情報、未修正脆弱性詳細等が含まれていない。
 - public contextへ追加するfieldは、field名だけでなく実際の値がpublic-safeか確認した。
 - repository内部handoffを無加工でpublic contextへコピーしていない。
@@ -57,6 +63,7 @@
 - 整備候補がscope外なら記録だけにした。
 - ユーザーが「完了まで」「ロードマップ通り」等の継続を既に許可している場合、機械的に毎batch停止していない。
 - scope拡大、Production Mutation、新たな高リスク操作、実質的な方針選択が必要な場合は該当部分だけ停止してauthorization / choiceを確認した。
+- hold対象の契約・入力に依存する後続作業も停止し、独立作業だけ継続した。
 
 ## 障害・復旧
 
@@ -70,9 +77,11 @@
 
 ## security containment
 
-- 漏えい・不正アクセスがunknownなら、credential失効等のProduction Mutationを自動実施していない。
-- confirmedまたは直接露出を示す強いEvidenceがある場合のみ、緊急containment候補として扱った。
+- 漏えい・不正アクセスがunknownなら、AIの自律判断だけでcredential失効等のProduction Mutationを実施していない。
+- confirmedまたは直接露出を示す強いEvidenceがある場合のみ、自律的な緊急containment候補として扱った。
 - 「確認して」「怪しい」だけをtoken失効authorizationとみなしていない。
+- ユーザーが「token Xを失効」のように具体的mutationを明示した場合、leak Evidenceがunknownでもnamed targetへのauthorizationとして扱えることを妨げていない。
+- その場合もleak Evidence自体をconfirmedへ格上げしていない。
 - ユーザーが明示したcontain / revoke / disable対象、または事前runbookで定義されたresource / operation / scopeだけにauthorizationを限定した。
 - containment authorizationを恒久変更や別resourceへ拡張していない。
 
@@ -136,6 +145,7 @@ blockedの場合:
 - 残存riskを記録した。
 - 今回scopeと無関係なら他のin-scope作業を継続した。
 - direct-changeの成功、安全、authorization判断に必要なら該当部分だけ保留した。
+- blocked判断を入力・契約として依存する後続作業も保留した。
 
 全体状態:
 
@@ -145,18 +155,20 @@ blockedの場合:
 
 必要に応じ、implementation / deployment / verification / documentation を `complete / pending / not-applicable` で記録します。
 
-commit成功、deploy成功、HTTP successだけでは完了扱いにしません。目的状態を確認します。
+commit成功、deploy成功、HTTP successだけでは完了扱いにしません。partial verificationを未確認の目的状態へ一般化しません。
 
 ## 解釈一致テスト
 
 大きなpolicy変更後またはrule矛盾レビュー時は `docs/POLICY_INTERPRETATION_CASES.md` を使います。
 
-- authorization fingerprintの一致 / 不一致。
+- authorization fingerprintの正規化とexact match。
+- resource階層 / record集合 / 複数operation事前承認。
 - inferred / unknown riskによるscope拡大。
-- security containmentとProduction Mutation authorization。
+- security containment Evidenceと明示credential authorizationの分離。
 - documentation/runtime mismatch。
-- blocked / unknownによる不要停止。
+- blocked / unknownと依存作業のhold範囲。
 - build number境界。
-- silent fallback / fake success。
+- schemaVersion意味区分。
+- silent fallback / fake success / partial verification。
 
 同じcaseで別AIがscope、Evidence、authorization、Production Mutation、continuation、Protocolについて大きく異なる結論を出せる場合は、rule不足または表現曖昧として扱います。
