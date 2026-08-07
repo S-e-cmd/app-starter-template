@@ -19,23 +19,18 @@ AIはユーザーのアプリ要件を確認し、実装前に次を内部判断
 
 AIはユーザーへ、そのまま入力できる具体値でGitHub作成設定を提示します。
 
-例:
+ただし、設定値をテンプレート内で一律固定してはいけません。アプリ要件、既存資産、公開予定、機密性を確認して、そのアプリに適した値を決めます。
 
-```text
-Repository name
-mini-maker
+案内対象:
 
-Description
-自然文からその場で使えるミニアプリUIを生成するAIアプリ
+- Repository name
+- Description
+- Visibility
+- README / .gitignore / License 等の初期化有無
 
-Visibility
-Private
+標準では、AIが後からbootstrapを行えるよう余計な初期ファイルを作らない構成を優先しますが、既存運用や要件がある場合はそちらを優先します。
 
-Initialize this repository
-初期ファイルなし
-```
-
-ユーザーには空リポジトリを作成してURLを返してもらいます。
+ユーザーには新規リポジトリを作成してURLを返してもらいます。
 
 GitHubの `Use this template` は通常案内しません。
 
@@ -55,33 +50,59 @@ GitHubの `Use this template` は通常案内しません。
 
 ## 4. Cloudflare公開設定の案内
 
-GitHub側の初期実装が完了したら、AIは対象リポジトリの実際の構成を確認してからCloudflare設定値を提示します。
+GitHub側の初期実装が完了したら、AIは対象リポジトリの実際の構成と既存Cloudflare設定を確認してからCloudflare設定値を提示します。
 
-固定値を推測して案内してはいけません。必ず対象リポジトリの `package.json`、`wrangler.jsonc` / `wrangler.toml`、Worker構成、静的出力先、必要Bindings等を確認してから案内します。
+### 固定してよいのは判断ルールだけ
+
+Workers / Pages、Production branch、Project / Worker name、Framework preset、Build command、Deploy command、Root directory、Build output directory、Compatibility date、Bindings 等をテンプレート内で一律固定してはいけません。
+
+必ず対象リポジトリの実物を確認し、必要に応じて次を確認します。
+
+- `package.json`
+- `wrangler.jsonc` / `wrangler.toml`
+- Worker entrypoint
+- 静的ファイル構成と出力先
+- 既存Cloudflareプロジェクト
+- 既存Production branch
+- D1 / KV / R2 / その他Bindings
+- 必要Secret / Variable
+- 既存の自動デプロイ方式
+
+既存CloudflareプロジェクトやBindingがある場合は、それを優先し、理由なく新規作成や名称変更を案内しません。
+
+### ユーザーへの案内方法
+
+確認後、ユーザーが判断し直さなくて済むよう、そのまま入力・選択できる完成した設定一覧を提示します。
 
 案内項目の例:
 
 ```text
 Cloudflare product
-Workers / Pages のどちらを使うか
+実構成から判断した Workers / Pages 等
 
 Repository
 owner/repository
 
 Project / Worker name
-実際に使用する名前
+確認後に確定した値
 
 Production branch
-main
+確認後に確定した値
+
+Framework preset
+必要な場合のみ
 
 Build command
-リポジトリ構成から確定した値
+確認後に確定した値。不要なら「空欄」と明記
 
 Deploy command
-リポジトリ構成から確定した値
+確認後に確定した値。不要なら「空欄」と明記
+
+Root directory
+必要な場合のみ。不要なら「空欄」と明記
 
 Build output directory
-必要な場合のみ
+必要な場合のみ。不要なら「空欄」と明記
 ```
 
 必要な場合は続けて次も具体値で案内します。
@@ -93,7 +114,21 @@ Build output directory
 - Compatibility date / flags
 - Custom domain
 
-## 5. ユーザー設定後
+Secretはリポジトリへ埋め込まず、Cloudflare等のSecret管理へ配置します。既存のSecret名やBinding名がある場合はそれを維持します。
+
+## 5. 原則としてユーザーに考えさせない
+
+初期設定の標準方針は「同じ値を毎回使う」ことではありません。
+
+AIは実際の要件とリポジトリ構成を確認し、その時点で必要なGitHub・Cloudflare設定を具体値で提示します。
+
+- 設定値を推測で固定しない。
+- 不要項目は「空欄」「不要」と明記する。
+- 複数の妥当な方式があり、結果に実質的な差がある場合だけユーザーへ選択を求める。
+- 既存設定が確認できる場合は、新しい既定値より既存設定を優先する。
+- ユーザーに設定値の調査や判断を丸投げしない。
+
+## 6. ユーザー設定後
 
 ユーザーがCloudflare設定完了を伝えたら、AIは可能な範囲で次を確認します。
 
@@ -104,14 +139,14 @@ Build output directory
 - 必須Secret / Variable / Bindingの不足
 - 初回表示と主要機能
 
-## 6. 完了条件
+## 7. 完了条件
 
 次が揃うまで新規アプリ作成フローを完了扱いにしません。
 
 - GitHubリポジトリ作成設定を具体値で案内した
-- 空リポジトリへbootstrapと初期実装を行った
+- 対象リポジトリへbootstrapと初期実装を行った
 - 自己引き継ぎ情報が揃っている
-- Cloudflareが必要な場合、実リポジトリに基づく設定値を案内した
+- Cloudflareが必要な場合、実リポジトリと既存設定に基づく設定値を案内した
 - 公開後の確認を行った、または未確認事項を明示した
 
 Cloudflareを使用しない構成の場合は、不要なCloudflare設定を案内しません。
