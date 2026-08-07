@@ -3,6 +3,26 @@
   "name": "app-starter-template",
   "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created application repositories, guiding deployment, non-destructive existing-app alignment, post-launch feature changes, high-risk recovery and migration work, and continued maintenance.",
   "defaultTemplate": "core",
+  "protocolRouting": {
+    "required": true,
+    "protocol": "docs/PROTOCOL_ROUTING_RULES.md",
+    "selectPrimaryModeByCurrentUserIntent": true,
+    "repositoryOrPublicUrlPresenceDoesNotSelectMaintenanceMode": true,
+    "highRiskProtocolsOverrideOnlyTheAffectedPart": true,
+    "priorityOrder": [
+      "incident-recovery",
+      "data-protection-or-migration",
+      "environment-recovery-or-change",
+      "feature-change",
+      "existing-app-alignment",
+      "cleanup-deletion"
+    ],
+    "dependencyUpdatePriorityIsContextual": true,
+    "requestedScopeMayChangeExistingBehavior": true,
+    "preserveBehaviorOutsideRequestedScope": true,
+    "validationStates": ["complete", "work-complete-verification-pending", "incomplete"],
+    "instruction": "Choose the primary protocol from the user's current work goal, not from the mere presence of a repository URL, public URL, or starter reference. New app creation uses creation/bootstrap, normal post-launch changes use feature change, whole-app stabilization or handoff cleanup uses existing-app alignment, and breakage uses incident recovery. When a high-risk condition appears, temporarily apply the matching high-risk protocol to that affected part without losing the original work goal. Preserve existing behavior outside the user's explicitly requested change scope."
+  },
   "creationFlow": {
     "required": true,
     "protocol": "docs/CREATE_AND_DEPLOY_FLOW.md",
@@ -20,12 +40,13 @@
     "enabled": true,
     "protocol": "docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md",
     "batchCompletionGuide": "docs/BATCH_COMPLETION_CHOICES.md",
-    "triggerWhenExistingRepositoryAndPublicUrlAreProvided": true,
+    "selectByUserIntent": true,
+    "repositoryAndPublicUrlAreContextNotTrigger": true,
     "templateConformanceIsNotGoal": true,
     "preserveExistingArchitectureByDefault": true,
     "doNotRestructureToMatchTemplate": true,
     "templateUsedAsGuidanceOnly": true,
-    "preserveExistingBehavior": true,
+    "preserveBehaviorOutsideRequestedScope": true,
     "preserveExistingDataContracts": true,
     "preserveExistingDeployment": true,
     "workInSafeBatches": true,
@@ -49,7 +70,7 @@
     "markRecommendedChoice": true,
     "continueChoiceMustNameNextBatch": true,
     "prioritizeAnotherAreaMustExplainWhatUserCanSpecify": true,
-    "instruction": "When an existing application repository and its public URL are provided with this starter reference, use the non-destructive existing-app protocol. Do not convert the application to the starter directory structure merely for conformance. Preserve working behavior, data contracts, deployment configuration, and public behavior. Work in small safe batches: inspect, change only what is justified, regression-check, record status, then assess the remaining maintenance need as high, medium, low, or hold using operational risk rather than template differences. At the end of each batch, explain the rating, recommend whether to continue, identify the next safe batch if relevant, and present the user with continue / finish for now / prioritize another area. Each choice must include a short explanation of what will happen; mark the recommended choice, name the concrete next batch beside continue, and explain beside prioritize another area that the user can specify a feature, UI area, storage, deployment, or other concern. Do not proceed to another batch until the user chooses to continue or redirects the target. If a tool, permission, or external-service limitation blocks one step, continue all other useful work and give the user only the specific external action that is genuinely required."
+    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. Do not convert the application to the starter directory structure merely for conformance. Preserve behavior outside the requested scope, data contracts, deployment configuration, and public behavior. Work in small safe batches: inspect, change only what is justified, regression-check, record status, then assess the remaining maintenance need as high, medium, low, or hold using operational risk rather than template differences. At the end of each batch, explain the rating, recommend whether to continue, identify the next safe batch if relevant, and present the user with continue / finish for now / prioritize another area."
   },
   "featureChange": {
     "enabled": true,
@@ -57,14 +78,15 @@
     "useForPostLaunchFeatureAdditionsAndSmallChanges": true,
     "inspectAffectedScopeBeforeChanging": true,
     "reuseExistingComponentsWhenAppropriate": true,
-    "preserveExistingBehavior": true,
+    "requestedScopeMayChangeExistingBehavior": true,
+    "preserveBehaviorOutsideRequestedScope": true,
     "preserveDataCompatibility": true,
     "avoidUnrelatedLargeRefactors": true,
     "splitNewResponsibilitiesWhenUseful": true,
     "regressionCheckAffectedScope": true,
     "updateHandoffDocsWithCode": true,
     "verifyPublishedBuildWhenDeploymentChanges": true,
-    "instruction": "For normal post-launch feature additions, UI improvements, integrations, and small specification changes, follow docs/FEATURE_CHANGE_PROTOCOL.md. Inspect the current implementation and affected scope first, reuse existing compatible parts, preserve existing behavior and data contracts, keep unrelated refactoring out of the change, split only responsibilities directly justified by the feature, regression-check the affected and adjacent behavior, update the relevant handoff docs, and verify the published build when deployment is involved."
+    "instruction": "For normal post-launch feature additions, UI improvements, integrations, requested behavior changes, and small specification changes, follow docs/FEATURE_CHANGE_PROTOCOL.md. The explicitly requested scope may change existing behavior; preserve behavior outside that scope. Inspect the current implementation and affected scope first, reuse existing compatible parts only when reuse does not create harmful coupling, keep unrelated refactoring out of the change, regression-check affected and adjacent behavior, update the relevant handoff docs, and verify the published build when deployment is involved."
   },
   "highRiskOperations": {
     "enabled": true,
@@ -73,7 +95,11 @@
       "protocol": "docs/INCIDENT_RECOVERY_PROTOCOL.md",
       "preferRollbackWhenCauseUnknownOrRepeatedFixesWouldBeNeeded": true,
       "doNotStackSpeculativeFixesOnBrokenState": true,
-      "separateRecoveryFromPermanentFix": true
+      "separateRecoveryFromPermanentFix": true,
+      "lastKnownGoodMeansVerifiedWorkingState": true,
+      "oneLimitedFixMeansOneDeployedAndVerifiedCycle": true,
+      "preferHistoryPreservingRollback": true,
+      "avoidForcePushAndHistoryRewriteByDefault": true
     },
     "dataMigration": {
       "protocol": "docs/DATA_MIGRATION_PROTOCOL.md",
@@ -91,21 +117,24 @@
       "protocol": "docs/CLEANUP_DELETION_PROTOCOL.md",
       "unusedLookingIsNotSufficientEvidence": true,
       "checkDynamicAndExternalReferences": true,
-      "deleteLateAndInSmallBatches": true
+      "deleteLateAndInSmallBatches": true,
+      "migrationCleanupMustWaitForMigrationVerification": true
     },
     "dependencyUpdate": {
       "protocol": "docs/DEPENDENCY_UPDATE_PROTOCOL.md",
       "doNotMixMajorUpdatesWithFeatureWork": true,
       "requireCompatibilityAndRollbackCheck": true,
-      "doNotUpgradeOnlyForConformance": true
+      "doNotUpgradeOnlyForConformance": true,
+      "incidentCausingDependencyChangeUsesIncidentPriority": true
     },
-    "instruction": "When a task becomes a production incident, data migration, environment/configuration change, cleanup/deletion task, or dependency/runtime update, stop treating it as an ordinary feature change and switch to the matching dedicated protocol. For incidents, do not keep overwriting a broken state with speculative fixes: identify the last known-good build or commit and prefer rollback when the cause is unclear, the failure is broad, or one attempted fix did not restore service. Restore normal operation first, then investigate and implement a permanent fix in a separate batch."
+    "instruction": "When a task becomes a production incident, data migration, environment/configuration change, cleanup/deletion task, or dependency/runtime update, apply the matching dedicated protocol to that portion of work. For incidents, do not keep overwriting a broken state with speculative fixes: identify the latest verified working state and prefer a history-preserving rollback when the cause is unclear, the failure is broad, or one deployed-and-verified limited fix did not restore service. Restore normal operation first, then investigate and implement a permanent fix in a separate batch."
   },
   "bootstrap": {
     "required": true,
     "protocol": "docs/BOOTSTRAP_PROTOCOL.md",
     "mustCompleteBeforeApplicationImplementation": true,
-    "targetWithoutAiContextIsUnbootstrapped": true,
+    "newApplicationTargetWithoutAiContextIsUnbootstrapped": true,
+    "existingApplicationWithoutAiContextMustNotBeRebuiltAsNew": true,
     "requiredFiles": [
       "ai-context.json",
       "llms.txt",
@@ -120,7 +149,7 @@
     "mode": "ai-populate-repository",
     "humanTemplateCopyRequired": false,
     "githubUseThisTemplateRequired": false,
-    "instruction": "First derive and present concrete GitHub repository creation settings from the application requirements rather than fixed defaults. After the user provides the repository URL, complete the bootstrap protocol, infer the required composition, populate the starter and handoff files, and implement application-specific features. If deployment is required, inspect the actual repository and existing deployment configuration before giving concrete Cloudflare settings. Preserve existing project names, bindings, branches, secrets names, and deployment mechanisms unless there is a clear reason to change them. Mark unnecessary fields as empty or not required instead of making the user infer them."
+    "instruction": "First derive and present concrete GitHub repository creation settings from the application requirements rather than fixed defaults. After the user provides the repository URL, complete the bootstrap protocol, infer the required composition, populate the starter and handoff files, and implement application-specific features. If deployment is required, inspect the actual repository and existing deployment configuration before giving concrete Cloudflare settings. Preserve existing project names, bindings, branches, secret names, and deployment mechanisms unless there is a clear reason to change them. Mark unnecessary fields as empty or not required instead of making the user infer them."
   },
   "selectionPolicy": {
     "userSelectionRequired": false,
@@ -154,6 +183,7 @@
     }
   },
   "rules": {
+    "protocolRouting": "docs/PROTOCOL_ROUTING_RULES.md",
     "creationAndDeployment": "docs/CREATE_AND_DEPLOY_FLOW.md",
     "existingAppAlignment": "docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md",
     "existingAppBatchCompletion": "docs/BATCH_COMPLETION_CHOICES.md",
@@ -186,6 +216,11 @@
     "splitByResponsibilityFromStart": true,
     "selfDescribingRepository": true,
     "githubActionsByDefault": false,
-    "preserveExistingBehavior": true
+    "preserveBehaviorOutsideRequestedScope": true,
+    "destructiveOperationsRequireExplicitUserIntentAndRecoveryPlan": true,
+    "doNotOverwriteOnShaConflict": true,
+    "refetchAndReapplyOwnDiffOnConflict": true,
+    "doNotRemoveConcurrentChangesWithoutExplicitReason": true,
+    "securityIncidentContainmentPrecedesNormalRecovery": true
   }
 }
