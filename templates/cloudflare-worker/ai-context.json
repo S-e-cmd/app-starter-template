@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "schemaVersionMeaning": "ai-context-document-schema",
   "starter": {
-    "schemaVersion": 4,
+    "schemaVersion": 5,
     "schemaVersionMeaning": "parent-starter-manifest-schema",
     "bootstrapTemplateCommitSha": "SET_AT_BOOTSTRAP",
     "bootstrapTemplateRevision": "SET_AT_BOOTSTRAP",
