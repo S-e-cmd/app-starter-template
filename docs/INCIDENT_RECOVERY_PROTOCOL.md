@@ -2,129 +2,78 @@
 
 公開中アプリや主要機能が壊れたとき、壊れた状態へ推測修正を重ねず、まず正常稼働へ戻すための手順です。
 
+Evidence、scope、Production Mutation authorization、security containment、last known good、rollback / roll-forward、安全停止条件の定義は `docs/PROTOCOL_ROUTING_RULES.md` を正本とします。このProtocolでは障害復旧固有の実施順序だけを定義します。
+
 ## 適用条件
 
-`docs/PROTOCOL_ROUTING_RULES.md` を前提に、次のいずれかが発生した場合は通常の機能追加・整備を中断し、このプロトコルを優先します。
+中央routingに従い、次のような状態では通常の機能追加・整備よりincident recoveryを優先します。
 
 - 白画面、起動不能、ログイン不能。
 - 主要機能が使えない。
 - 修正後に複数機能が同時に落ちた。
 - データが消えた、読めない、初期化されたように見える。
-- 公開ページとリポジトリの状態が大きく食い違う。
+- 公開ページとrepository / deploymentの状態が大きく食い違い、主要機能へ影響している。
 - 原因不明のまま次の推測修正を重ねようとしている。
-- Secret、認証情報、非公開データの漏えいが疑われる。
+- Secret、認証情報、非公開データの漏えいについて中央security containment条件を満たすEvidenceがある。
 
-## 最優先原則
+不一致やunknownがあるだけで一律にincident扱いしません。今回の主要機能・データ・securityへ実際に影響するかを中央Evidence Ruleで判断します。
 
-1. 被害拡大を止める。
-2. code / deployment / environment / data-schema / external API compatibility の現在状態を分けて確認する。
-3. 最後に正常だった状態、または候補を特定する。
-4. 壊れた状態へ推測修正を重ねない。
-5. rollbackとroll-forwardの安全性を比較する。
-6. まず正常稼働へ戻し、その後に別バッチで原因調査と恒久修正を行う。
-
-セキュリティ事故の場合は、通常復旧より先に漏えいSecret / tokenの失効・ローテーションや不要な公開経路の遮断を優先します。Secret値そのものをログ、issue、commit、チャットへ再掲しません。
-
-## Last known good の定義
-
-`last known good` は単に直前のcommitではありません。必要に応じて次を別軸で記録します。
-
-- code。
-- deployment。
-- environment。
-- data / schema。
-- external API compatibility。
-
-主要動作が正常だったことを確認できる最新状態を使用します。正常確認記録がない場合は「最後に正常だった可能性が高い候補」とし、確定扱いしません。
-
-## 限定修正とrollback検討
-
-次の状況では、追加の推測修正を重ねずrollbackを第一候補として安全性評価します。
-
-- 白画面、起動不能、ログイン不能など主要導線が壊れている。
-- 修正後に複数機能が同時に落ちた。
-- 主要データが消えたように見える。
-- 原因がまだ特定できていない。
-- 1回の限定修正サイクルで復旧しない。
-- 変更範囲が広く、追加変更の影響を安全に予測できない。
-
-ただし「1回失敗したら必ずrollback」ではありません。rollback前に次の安全性評価を必須とします。
-
-- 戻すcodeが現在data/schemaと互換か。
-- 現在のenvironment設定と互換か。
-- migration後データへ悪影響がないか。
-- rollbackによって失われる正常変更がないか。
-- 実際に復元可能なcommit / build / deploymentが存在するか。
-- external API等の現在仕様と互換か。
-
-rollbackの方が危険、復元不能、または原因が十分特定され小さなroll-forwardの方が安全な場合は、roll-forward修正を選択できます。
-
-## 1回の限定修正の定義
-
-次の1サイクルを1回と数えます。
-
-1. 原因仮説を1つに絞る。
-2. 小規模な変更を行う。
-3. 対象環境へ反映する。
-4. 復旧確認を行う。
-
-コードを書いただけ、commitしただけ、対象環境へ未反映の変更は1回に数えません。
-
-## その場で限定修正してよい条件
-
-次をすべて満たす場合に限り、限定修正を検討できます。
-
-- 原因箇所が十分特定できている。
-- 変更範囲が狭い。
-- データ互換性に影響しない、または影響を管理できる。
-- 修正後の回帰確認が可能。
-- 追加修正が新たな推測に依存しない。
-
-## rollback方法
-
-原則としてGit履歴を書き換えない方法を優先します。
-
-優先する方法:
-
-- 問題commitを `revert` する。
-- 過去正常版の内容を復元し、新しいcommitとして反映する。
-- Cloudflare等のdeploymentを最後の正常版へ戻す。
-
-原則避ける方法:
-
-- `reset --hard` を前提とした履歴巻き戻し。
-- force push。
-- 問題変更と無関係な正常変更までまとめて消す上書き。
-
-公開deploymentだけを戻した場合は、GitHubとの不一致を一時状態として `PROJECT_STATUS.md` に記録し、放置しません。
-
-## 標準手順
+## 復旧の標準手順
 
 1. 現在の症状、直前変更、公開buildを記録する。
-2. code / deployment / environment / data-schema / external API compatibility の現在状態を分けて確認する。
-3. last known good または候補を特定する。
-4. rollback安全性評価を行う。
-5. rollbackまたは安全な限定roll-forwardを選択する。
-6. Production Mutationが必要なら中央のauthorization policyを適用する。
-7. 起動、主要操作、保存、再読み込み、公開状態を確認する。
-8. 正常稼働へ戻った時点で復旧バッチを終了する。
-9. 原因調査・恒久修正は別バッチで行う。
-10. `docs/PROJECT_STATUS.md` に障害、復旧方法、戻した/進めたcommit・build・deployment、未解決原因、再適用可否を記録する。
+2. 必要に応じて `code / deployment / environment / data-schema / external API compatibility` を別軸で確認する。
+3. last known goodまたは候補を特定する。
+4. 原因仮説とEvidence stateを記録する。
+5. rollback / roll-forward安全性評価を行う。
+6. Production Mutationが必要なら、中央authorization fingerprintで許可状態を判定する。
+7. security containmentが必要なら、中央security containment policyに従い、許可済みの最小対象だけ封じ込める。
+8. history-preserving rollbackまたはEvidenceに基づく限定roll-forwardを実施する。
+9. 起動だけでなく、障害対象の主要操作、保存、再読み込み、API / external integration、公開状態を確認する。
+10. 正常稼働へ戻った時点で復旧batchを終了する。
+11. 原因調査・恒久修正は別batchとして扱う。
+12. `docs/PROJECT_STATUS.md` に症状、Evidence、復旧方法、commit / build / deployment、verified / blocked、未解決原因、次batchを記録する。
+
+## 限定修正
+
+中央ruleで定義された「1回の限定修正」は、`原因仮説1つ → 小変更 → 対象環境へ反映 → 復旧確認` の1cycleです。
+
+次を満たす場合に限定roll-forwardを検討できます。
+
+- 原因箇所がconfirmed、または復旧判断に十分なEvidenceで限定されている。
+- 変更範囲が狭い。
+- data / schema / environmentへの影響が評価済み。
+- 修正後の回帰確認が可能。
+- 次の推測を追加しない。
+
+1cycleで復旧しない場合は推測修正を重ねず、中央rollback policyで再評価します。
+
+## security incident
+
+security containmentのauthorization境界は中央ruleを使用します。
+
+- 「確認して」「怪しい」だけでcredentialを失効しない。
+- unknownならread-only確認を優先する。
+- confirmed leak等でユーザーがcontain / revoke / disableを明示した場合も、その指定resource・operation・scopeだけに限定する。
+- 事前runbookのauthorizationを使う場合もrunbook記載範囲を超えない。
+- Secret値そのものをlog、issue、commit、chatへ再掲しない。
 
 ## 禁止事項
 
 - 原因不明のまま修正を上書きし続ける。
-- 壊れた状態を土台に大規模リファクタリングする。
-- 復旧と恒久修正を同じバッチに混在させる。
-- データ異常時に安易な初期化・削除・再作成を行う。
+- 壊れた状態を土台に大規模refactorする。
+- 復旧と無関係な恒久改善を同じbatchへ混ぜる。
+- data異常時に安易な初期化・削除・再作成を行う。
 - rollback安全性を確認せず機械的に巻き戻す。
-- force pushや履歴改変を通常の復旧手段として使用する。
-- 「画面が開いた」「deploy成功」だけで復旧完了扱いにする。
+- force pushやhistory rewriteを通常復旧手段として使用する。
+- securityを理由にauthorization対象を別credential・別resourceへ拡張する。
+- 「画面が開いた」「deploy成功」「HTTP success」だけで復旧完了扱いにする。
 
 ## 復旧結果の状態
 
-重要検証項目は `verified / blocked / not-applicable` で扱い、blockedなら理由、代替確認、残存リスクを記録します。
+中央verification policyを使用します。
 
 - **完了** — 正常稼働復旧と必要な確認が完了。
 - **作業完了 / 検証保留** — 復旧変更は完了したが、必要確認の一部がblocked。
 - **未完了** — 正常稼働へまだ戻っていない、または復旧作業そのものに残作業がある。
+
+blocked項目が今回の復旧判断に不要なら、他のin-scope復旧作業を継続します。
