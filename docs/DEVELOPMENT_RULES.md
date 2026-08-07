@@ -38,7 +38,7 @@ Repo URL、公開URL、starter参照の有無だけではモードを決めま�
 
 1. 対象機能と関連fileを確認する。
 2. 呼び出し元・呼び出し先を確認する。
-3. 保存data・API・PC/SP表示への影響を確認する。
+3. 保存data・API・PC/SP表示への影響を、今回のdirect-changeと実際の依存関係に応じて確認する。
 4. `ai-context.json` と `docs/` の現在情報を確認する。
 5. Evidence状態を確認する。
 6. Production Mutation、破壊的操作、高リスク条件の有無を確認する。
@@ -48,9 +48,9 @@ Repo URL、公開URL、starter参照の有無だけではモードを決めま�
 
 ## 実装
 
-- 新機能追加時は既存fileへの追記を第一選択にしない。
-- 新しい責務なら `features/`、`services/`、`repositories/` 等へ分離する。
-- 既存アプリではdirectory名をtemplateへ合わせることを目的にしない。
+- 新規アプリでは、新しい責務を既存entry fileへ無制限に追記せず、責務に合うmodule / fileへ分離する。
+- 既存アプリでは、既存の責務境界・命名・directory構成を優先し、`features/`、`services/`、`repositories/` 等のtemplate例へ合わせるだけの移動・新設を行わない。
+- 既存moduleが今回の責務を自然に担えるならそこへ実装し、新しい責務が明確に生じた場合だけ現在architectureに合う形で分離する。
 - event handler内に通信、保存、変換、業務logicを直接埋め込まない。
 - 共通処理は、責務が一致し不要な依存を増やさない場合に再利用する。
 - 行数削減だけを目的とした過剰分割はしない。
@@ -81,12 +81,18 @@ GitHub等への書き込み時にSHAや内容の競合が起きた場合、古�
 
 重要項目は `verified / blocked / not-applicable` で扱います。blockedなら理由、代替確認、残存riskを記録します。
 
+確認項目は固定チェックとして全て要求せず、現在のdirect-changeのpurpose stateと因果的な回帰riskから選びます。
+
+候補:
+
 1. 対象機能。
 2. 関連する既存機能の回帰。
 3. 構文・JSON・通信・保存・初期表示・再読み込み。
 4. PC/SP双方への影響。
 5. 必要なdocs更新。
 6. 公開runtime / deployed assetが変わる場合はbuild番号policyを適用。
+
+例えばserver-onlyの内部変更でUIへ因果的影響がない場合、PC/SP確認だけを理由に完了をholdしません。一方、保存・API・UI等がdirect-changeまたは回帰riskに含まれる場合は必要確認として扱います。
 
 ## build番号
 
