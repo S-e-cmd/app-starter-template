@@ -21,9 +21,19 @@
 
 ## テンプレート
 
-- `templates/core/`
-- `templates/cloudflare-worker/`
-- `templates/d1/`
-- `templates/sheets-gas/`
+- `templates/core/` — 共通フロント基盤、build/config、共通UI、API、Storage、自己引き継ぎ資料
+- `templates/cloudflare-worker/` — route / service / repository 分割のWorker構成
+- `templates/d1/` — schema / migration / repository を追加するD1構成
+- `templates/sheets-gas/` — config / API / Sheets / utils に分割したGAS構成
+
+## 新規アプリ作成時
+
+1. `manifest.json` と共通ルールを確認する。
+2. `templates/core/` を基礎として必要な追加テンプレートを組み合わせる。
+3. アプリ自身の `ai-context.json` と `docs/` を残す。
+4. アプリ固有の構成・データ契約・UI維持事項・現在状態へ書き換える。
+5. 以後の機能追加でもコードと引き継ぎ資料を同じ変更単位で更新する。
+
+途中のChatで公開URLまたはGitHubリポジトリだけが共有された場合も、対象アプリ自身の `ai-context.json` と `docs/` から現在構成を確認し、親テンプレートの共通ルールへ戻れる状態を維持します。
 
 GitHub Actionsは標準では使用しません。
