@@ -2,7 +2,7 @@
 
 新規アプリを保守しやすく立ち上げ、既存アプリを壊さず更新・整備・復旧するためのAI向け正本です。
 
-## 最重要: まず作業モード・scope・authorizationを決める
+## 最重要: まず作業モード・scope・Evidence・authorizationを決める
 
 最初に `docs/PROTOCOL_ROUTING_RULES.md` を読み、ユーザーの現在の目的から主作業モードを決めます。
 
@@ -13,15 +13,16 @@
 
 GitHub repository URL、公開URL、starter参照があること自体は整備モードを選ぶ理由にしません。
 
-作業開始前に `direct-change / required-propagation / out-of-scope` を区別し、`confirmed / inferred / unknown` を分けます。tool上で実行可能であることと、ユーザーが本番変更を許可したことも分離します。
+作業開始前に `direct-change / required-propagation / out-of-scope` と `confirmed / inferred / unknown` を区別します。tool上で実行可能であることと、ユーザーが本番変更を許可したことも分離します。
 
 ## 中央ルールの役割分担
 
 - `manifest.json` — 機械判定しやすい条件、状態、列挙値、参照先。
 - `docs/PROTOCOL_ROUTING_RULES.md` — 判断理由、例外、scope、Evidence、authorization、Production Mutation、検証状態等の中央説明。
+- `docs/POLICY_INTERPRETATION_CASES.md` — 同じruleを別AIが読んでも同じ分類になるか確認するadversarial cases。
 - 各Protocol — その作業モード固有の実施手順。
 
-同じ自然言語ruleをmanifestへ過剰に押し込まず、機械判定と説明責務を分けます。
+中央ruleを各Protocolへ詳細コピーせず、共通定義は中央policyを参照します。
 
 ## 新規アプリ
 
@@ -40,7 +41,8 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 
 通常の機能追加・仕様変更・UI改善・限定的不具合修正は `docs/FEATURE_CHANGE_PROTOCOL.md` を使用します。
 
-- direct-changeとrequired-propagationだけを変更。
+- direct-changeと、中央Evidence条件を満たすrequired-propagationだけを変更。
+- unknown riskをscope拡大理由にしない。
 - out-of-scopeは記録だけにする。
 - 既存部品再利用は不要な結合を増やさない場合だけ。
 - generated fileはsourceがあるならsource側を変更。
@@ -54,7 +56,7 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 - template準拠を目的にしない。
 - 新規アプリ用directory例へ既存アプリを無理に寄せない。
 - ユーザーが「完了まで」「ロードマップ通り」等を既に明示している場合、当初scope内の安全なbatchで毎回停止しない。
-- scope拡大、Production Mutation、新たな高リスク操作、実質的な方針選択が必要な場合に停止する。
+- scope拡大、Production Mutation、新たな高リスク操作、実質的な方針選択が必要な場合に該当部分だけ停止する。
 - 選択肢が必要な場合だけ `docs/BATCH_COMPLETION_CHOICES.md` を使用する。
 
 ## 障害復旧
@@ -70,20 +72,22 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 
 ## Production Mutation
 
-本番data、schema、Secret、Binding、production branch、deployment、公開URL、認証・保存先等への変更は通常code編集と分離します。
+既存productionのdata、schema、Secret、Binding、権限、schedule、deployment、公開URL、認証・保存先等の状態を変える操作は、作成・変更・削除の別を問わず通常code編集と分離します。
 
 - tool capability ≠ user authorization。
 - authorizationは `not-authorized / authorized-for-this-operation / already-approved-in-current-task` で扱う。
+- `already-approved-in-current-task` は `environment / resource / operation-type / target-scope` が一致する場合だけ継承可能。
 - 「本番も含めて対応」等の広い依頼は、個別の破壊操作への包括許可ではない。
 
 ## 共通安全ルール
 
 `docs/PROTOCOL_ROUTING_RULES.md` では次を中央管理します。
 
-- scope 3区分。
+- scope 3区分とrequired-propagation Evidence条件。
 - Evidence Rule。
 - 通常仕様の情報源優先順位と安全停止条件の分離。
-- Production Mutationとauthorization。
+- Production Mutationとauthorization fingerprint。
+- security containmentとauthorizationの境界。
 - 実data検証の段階。
 - code / schema / actual data / environment backupの分離。
 - rollback / roll-forward安全性評価。
@@ -96,12 +100,12 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 - public ai-context安全基準。
 - build number policy。
 - `verified / blocked / not-applicable` と完了状態。
-- UIの情報密度・一覧性・PC/SP保護。
 
 ## 入口
 
 - `manifest.json` — 機械可読の中央policy。
 - `docs/PROTOCOL_ROUTING_RULES.md` — 中央判断・例外・安全rule。
+- `docs/POLICY_INTERPRETATION_CASES.md` — 抜け道・解釈差のadversarial test cases。
 - `docs/CREATE_AND_DEPLOY_FLOW.md` — 新規作成から公開確認。
 - `docs/BOOTSTRAP_PROTOCOL.md` — 新規app初期化。
 - `docs/FEATURE_CHANGE_PROTOCOL.md` — 通常更新。
@@ -127,4 +131,4 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 
 これらのdirectory構成は新規アプリ向けです。既存アプリへの変更要求ではありません。
 
-GitHub Actionsは標準では使用しません。
+GitHub Actionsは標準では使用しません.
