@@ -1,0 +1,68 @@
+#app-loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.35);
+  z-index: 1000;
+}
+
+.app-loading-panel,
+.app-modal {
+  background: Canvas;
+  color: CanvasText;
+  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.18);
+}
+
+.app-loading-panel { padding: 20px 24px; text-align: center; }
+.app-loading-spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid color-mix(in srgb, CanvasText 25%, transparent);
+  border-top-color: CanvasText;
+  border-radius: 50%;
+  animation: app-spin .8s linear infinite;
+}
+
+#app-toast-container {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  gap: 8px;
+  z-index: 1100;
+}
+
+.app-toast {
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: Canvas;
+  color: CanvasText;
+  border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
+}
+
+.app-toast-error { border-color: #b42318; }
+.app-empty-state { text-align: center; opacity: .7; padding: 24px; }
+
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 0.4);
+  z-index: 1050;
+}
+
+.app-modal { width: min(560px, 100%); max-height: min(80vh, 720px); overflow: auto; }
+.app-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent); }
+.app-modal-header h2 { margin: 0; font-size: 1.1rem; }
+.app-modal-close { min-width: 40px; min-height: 40px; }
+.app-modal-body { padding: 16px; }
+
+@keyframes app-spin { to { transform: rotate(360deg); } }
