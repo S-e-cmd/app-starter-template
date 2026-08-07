@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "app-starter-template",
   "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created application repositories, guiding deployment, non-destructive existing-app alignment, post-launch feature changes, high-risk recovery and migration work, and continued maintenance.",
   "defaultTemplate": "core",
@@ -10,7 +10,7 @@
     "repositoryOrPublicUrlPresenceDoesNotSelectMaintenanceMode": true,
     "highRiskProtocolsOverrideOnlyTheAffectedPart": true,
     "priorityOrder": [
-      "incident-recovery",
+      "security-containment-or-incident-recovery",
       "data-protection-or-migration",
       "environment-recovery-or-change",
       "feature-change",
@@ -18,10 +18,145 @@
       "cleanup-deletion"
     ],
     "dependencyUpdatePriorityIsContextual": true,
-    "requestedScopeMayChangeExistingBehavior": true,
-    "preserveBehaviorOutsideRequestedScope": true,
-    "validationStates": ["complete", "work-complete-verification-pending", "incomplete"],
-    "instruction": "Choose the primary protocol from the user's current work goal, not from the mere presence of a repository URL, public URL, or starter reference. New app creation uses creation/bootstrap, normal post-launch changes use feature change, whole-app stabilization or handoff cleanup uses existing-app alignment, and breakage uses incident recovery. When a high-risk condition appears, temporarily apply the matching high-risk protocol to that affected part without losing the original work goal. Preserve existing behavior outside the user's explicitly requested change scope."
+    "instruction": "Choose the primary protocol from the user's current work goal. Apply high-risk protocols only to the affected part and preserve the original task goal unless safety requires stopping it."
+  },
+  "scopePolicy": {
+    "categories": ["direct-change", "required-propagation", "out-of-scope"],
+    "directChangeDefinition": "A function, behavior, UI, data flow, or setting the user specifically asked to change.",
+    "requiredPropagationDefinition": "An internal change that is unavoidable to make the direct change work or to prevent a concrete regression, compatibility break, data-loss risk, or deployment failure caused by that direct change.",
+    "outOfScopeDefinition": "A change that may be beneficial but is not required to satisfy the current task.",
+    "insufficientReasonsForScopeExpansion": [
+      "it-could-be-improved",
+      "it-is-related",
+      "it-is-in-the-same-file",
+      "the-file-is-long",
+      "best-practice-differs",
+      "newer-technology-exists",
+      "template-conformance",
+      "aesthetic-code-cleanup"
+    ],
+    "minimalMeans": "Only the responsibilities, contracts, and UI areas required to satisfy the user's requested outcome, not the fewest lines changed.",
+    "scopeExpansionClassifications": ["required-propagation", "recommended-improvement", "unrelated-issue"],
+    "onlyRequiredPropagationMayProceedAutomatically": true
+  },
+  "evidencePolicy": {
+    "states": ["confirmed", "inferred", "unknown"],
+    "doNotAssertWithoutEvidence": ["unused", "unnecessary", "broken", "root-cause", "working", "compatible", "safe"],
+    "acceptableEvidenceExamples": ["code-reference", "runtime-result", "log", "actual-setting", "history", "user-confirmation"],
+    "namingOrAppearanceAloneIsNotEvidence": true,
+    "unverifiedExternalConsumerMeansUsageUnknown": true,
+    "usageUnknownPublicContractMustNotBeDeleted": true
+  },
+  "rulePrecedence": {
+    "normalSpecificationOrder": [
+      "current-explicit-user-instruction",
+      "current-app-specific-contracts-and-ui-rules",
+      "verified-runtime-and-current-implementation",
+      "parent-template-general-rules",
+      "readme-and-older-documentation",
+      "inference"
+    ],
+    "normalPrecedenceDoesNotOverrideSafetyStops": true,
+    "normalPrecedenceDoesNotGrantDestructiveAuthorization": true,
+    "documentationRuntimeConflictMustBeRecordedAsMismatch": true,
+    "doNotSilentlyRewriteEitherSideOfAMismatch": true
+  },
+  "productionMutationPolicy": {
+    "enabled": true,
+    "toolCapabilityDoesNotEqualUserAuthorization": true,
+    "authorizationStates": ["not-authorized", "authorized-for-this-operation", "already-approved-in-current-task"],
+    "broadMaintenanceRequestIsNotDestructiveAuthorization": true,
+    "operations": [
+      "production-data-delete-or-rewrite",
+      "production-schema-migration-or-destructive-change",
+      "production-sheet-structure-delete-or-bulk-rewrite",
+      "production-secret-variable-binding-change",
+      "production-branch-or-deployment-setting-change",
+      "project-worker-delete-or-rename",
+      "public-url-or-custom-domain-change",
+      "breaking-production-api-change",
+      "production-auth-or-storage-backend-switch"
+    ],
+    "irreversibleOrHardToRecoverRequiresOperationSpecificAuthorization": true,
+    "requireImpactAndRecoveryPlanBeforeExecution": true
+  },
+  "productionDataTestPolicy": {
+    "priority": ["read-only", "copy-snapshot-staging", "new-isolated-test-record", "modify-existing-production-data"],
+    "modifyingExistingProductionDataRequiresExplicitAuthorization": true,
+    "doNotMixUnmarkedTestDataIntoProduction": true
+  },
+  "backupPolicy": {
+    "separateBackupTypes": ["code", "schema", "actual-data", "environment-settings"],
+    "gitHistoryDoesNotCountAsActualDataBackup": true,
+    "recordApplicableRecoverySourceBeforeHighRiskMutation": true
+  },
+  "rollbackPolicy": {
+    "evaluateBeforeRollback": [
+      "code-data-schema-compatibility",
+      "environment-compatibility",
+      "post-migration-data-impact",
+      "normal-changes-that-would-be-lost",
+      "actual-restore-target-exists",
+      "external-api-current-compatibility"
+    ],
+    "rollForwardAllowedWhenRollbackIsMoreDangerous": true,
+    "preferHistoryPreservingRollback": true,
+    "avoidForcePushAndHistoryRewriteByDefault": true,
+    "lastKnownGoodAxes": ["code", "deployment", "environment", "data-schema", "external-api-compatibility"],
+    "oneLimitedFixMeansOneDeployedAndVerifiedCycle": true
+  },
+  "verificationPolicy": {
+    "itemStates": ["verified", "blocked", "not-applicable"],
+    "blockedRequiresReasonAlternativeAndResidualRisk": true,
+    "overallStates": ["complete", "work-complete-verification-pending", "incomplete"],
+    "components": ["implementation", "deployment", "verification", "documentation"],
+    "componentStates": ["complete", "pending", "not-applicable"],
+    "commitDeployOrHttpSuccessAloneIsNotFunctionalSuccess": true,
+    "purposeStateMustBeVerified": true
+  },
+  "buildNumberPolicy": {
+    "format": "YYYYMMDD-NN",
+    "requiredWhenPublicRuntimeOrDeployedAssetChanges": true,
+    "notRequiredByDefaultFor": ["docs-only", "readme-only", "parent-template-explanation-only", "runtime-neutral-review-record-only"],
+    "rollbackOrRollForwardChangingPublishedContentGetsNewBuild": true,
+    "appSpecificVersionPolicyTakesPrecedenceWhenExplicit": true
+  },
+  "generatedFilesPolicy": {
+    "preferEditingSourceOverDerivedOutput": true,
+    "doNotHandEditDerivedOutputWhenSourceExists": true,
+    "documentReasonIfDerivedOutputIsCanonical": true
+  },
+  "fallbackPolicy": {
+    "noSilentFallback": true,
+    "existingDefinedFallbackMayBeUsed": true,
+    "doNotSwitchStorageAuthApiOrDeploymentModeSilently": true
+  },
+  "concurrencyPolicy": {
+    "doNotOverwriteOnShaConflict": true,
+    "refetchAndReapplyOwnDiffOnConflict": true,
+    "doNotRemoveConcurrentChangesWithoutExplicitReason": true,
+    "recheckImportantFileStateBeforeWriteAfterLongRunningWork": true
+  },
+  "publicContextPolicy": {
+    "publicAiContextMustBePublicSafe": true,
+    "exclude": [
+      "secrets-and-credentials",
+      "internal-only-urls",
+      "private-resource-identifiers",
+      "personal-data",
+      "private-repository-confidential-information",
+      "unfixed-vulnerability-details",
+      "operationally-sensitive-internal-information"
+    ],
+    "repositoryInternalProjectStatusMayContainMoreDetail": true
+  },
+  "templateDriftPolicy": {
+    "generatedAppMustRecordStarterSchemaVersion": true,
+    "generatedAppMustRecordBootstrapTemplateCommitSha": true,
+    "generatedAppMustRecordBootstrapTemplateRevision": true,
+    "generatedAppMustRecordCurrentParentManifestUrl": true,
+    "latestParentRulesMayInformSafety": true,
+    "latestParentRulesMustNotByThemselvesJustifyExistingAppRestructure": true
   },
   "creationFlow": {
     "required": true,
@@ -34,7 +169,8 @@
     "fixedConfigurationValuesByDefault": false,
     "presentConcreteSettingsToUser": true,
     "markUnusedFieldsExplicitly": true,
-    "userChoosesTemplate": false
+    "userChoosesTemplate": false,
+    "doNotGuessHighCostUnknowns": ["visibility", "authentication", "persistent-storage", "personal-data-storage", "paid-service-use", "external-exposure", "retention-policy"]
   },
   "existingAppMode": {
     "enabled": true,
@@ -64,13 +200,21 @@
       "unverified-critical-integrations-or-storage",
       "handoff-difficulty"
     ],
-    "requireUserChoiceAfterEachBatch": true,
+    "batchChoicePolicy": "conditional",
+    "mayAutoContinueWhenUserAlreadyAuthorizedContinuation": true,
+    "mustPauseForChoiceWhen": [
+      "scope-expands-beyond-current-task",
+      "new-production-mutation-needs-authorization",
+      "high-risk-protocol-needs-operation-specific-authorization",
+      "materially-different-implementation-options-require-user-choice",
+      "user-requested-per-batch-choice"
+    ],
     "batchCompletionChoices": ["continue", "finish-for-now", "prioritize-another-area"],
-    "requireChoiceDescriptions": true,
+    "requireChoiceDescriptionsWhenChoiceIsPresented": true,
     "markRecommendedChoice": true,
     "continueChoiceMustNameNextBatch": true,
     "prioritizeAnotherAreaMustExplainWhatUserCanSpecify": true,
-    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. Do not convert the application to the starter directory structure merely for conformance. Preserve behavior outside the requested scope, data contracts, deployment configuration, and public behavior. Work in small safe batches: inspect, change only what is justified, regression-check, record status, then assess the remaining maintenance need as high, medium, low, or hold using operational risk rather than template differences. At the end of each batch, explain the rating, recommend whether to continue, identify the next safe batch if relevant, and present the user with continue / finish for now / prioritize another area."
+    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. If the user already instructed the AI to continue through the roadmap, finish the stated scope, or process remaining stabilization work, continue through safe in-scope batches without forcing a choice after every batch. Pause when scope expands, a new destructive/production mutation needs authorization, a high-risk operation requires specific approval, or the user must choose between materially different directions."
   },
   "featureChange": {
     "enabled": true,
@@ -85,27 +229,23 @@
     "splitNewResponsibilitiesWhenUseful": true,
     "regressionCheckAffectedScope": true,
     "updateHandoffDocsWithCode": true,
-    "verifyPublishedBuildWhenDeploymentChanges": true,
-    "instruction": "For normal post-launch feature additions, UI improvements, integrations, requested behavior changes, and small specification changes, follow docs/FEATURE_CHANGE_PROTOCOL.md. The explicitly requested scope may change existing behavior; preserve behavior outside that scope. Inspect the current implementation and affected scope first, reuse existing compatible parts only when reuse does not create harmful coupling, keep unrelated refactoring out of the change, regression-check affected and adjacent behavior, update the relevant handoff docs, and verify the published build when deployment is involved."
+    "verifyPublishedBuildWhenDeploymentChanges": true
   },
   "highRiskOperations": {
     "enabled": true,
     "normalFeatureProtocolMustYieldWhenMatched": true,
     "incidentRecovery": {
       "protocol": "docs/INCIDENT_RECOVERY_PROTOCOL.md",
-      "preferRollbackWhenCauseUnknownOrRepeatedFixesWouldBeNeeded": true,
       "doNotStackSpeculativeFixesOnBrokenState": true,
       "separateRecoveryFromPermanentFix": true,
-      "lastKnownGoodMeansVerifiedWorkingState": true,
-      "oneLimitedFixMeansOneDeployedAndVerifiedCycle": true,
-      "preferHistoryPreservingRollback": true,
-      "avoidForcePushAndHistoryRewriteByDefault": true
+      "rollbackRequiresSafetyEvaluation": true,
+      "rollForwardAllowedWhenSafer": true
     },
     "dataMigration": {
       "protocol": "docs/DATA_MIGRATION_PROTOCOL.md",
       "preserveBackwardCompatibilityByDefault": true,
       "requireRollbackOrRecoveryPlan": true,
-      "doNotDeleteOldCompatibilityBeforeRealDataVerification": true
+      "doNotDeleteOldCompatibilityBeforeMigrationCompletionCriteria": true
     },
     "environmentChange": {
       "protocol": "docs/ENVIRONMENT_CHANGE_PROTOCOL.md",
@@ -118,16 +258,16 @@
       "unusedLookingIsNotSufficientEvidence": true,
       "checkDynamicAndExternalReferences": true,
       "deleteLateAndInSmallBatches": true,
-      "migrationCleanupMustWaitForMigrationVerification": true
+      "contractBoundaryRenameIsBreakingRegardlessOfCount": true
     },
     "dependencyUpdate": {
       "protocol": "docs/DEPENDENCY_UPDATE_PROTOCOL.md",
       "doNotMixMajorUpdatesWithFeatureWork": true,
       "requireCompatibilityAndRollbackCheck": true,
       "doNotUpgradeOnlyForConformance": true,
-      "incidentCausingDependencyChangeUsesIncidentPriority": true
-    },
-    "instruction": "When a task becomes a production incident, data migration, environment/configuration change, cleanup/deletion task, or dependency/runtime update, apply the matching dedicated protocol to that portion of work. For incidents, do not keep overwriting a broken state with speculative fixes: identify the latest verified working state and prefer a history-preserving rollback when the cause is unclear, the failure is broad, or one deployed-and-verified limited fix did not restore service. Restore normal operation first, then investigate and implement a permanent fix in a separate batch."
+      "checkDirectTransitiveAndLockfileDiffs": true,
+      "securityUpdatesMayOverrideNormalBatchSeparation": true
+    }
   },
   "bootstrap": {
     "required": true,
@@ -135,6 +275,7 @@
     "mustCompleteBeforeApplicationImplementation": true,
     "newApplicationTargetWithoutAiContextIsUnbootstrapped": true,
     "existingApplicationWithoutAiContextMustNotBeRebuiltAsNew": true,
+    "existingStartedCodeMustNotBeRefactoredJustToBootstrap": true,
     "requiredFiles": [
       "ai-context.json",
       "llms.txt",
@@ -149,7 +290,8 @@
     "mode": "ai-populate-repository",
     "humanTemplateCopyRequired": false,
     "githubUseThisTemplateRequired": false,
-    "instruction": "First derive and present concrete GitHub repository creation settings from the application requirements rather than fixed defaults. After the user provides the repository URL, complete the bootstrap protocol, infer the required composition, populate the starter and handoff files, and implement application-specific features. If deployment is required, inspect the actual repository and existing deployment configuration before giving concrete Cloudflare settings. Preserve existing project names, bindings, branches, secret names, and deployment mechanisms unless there is a clear reason to change them. Mark unnecessary fields as empty or not required instead of making the user infer them."
+    "inspectActualRepositoryBeforeConcreteDeploymentAdvice": true,
+    "preserveExistingDeploymentNamesAndBindingsByDefault": true
   },
   "selectionPolicy": {
     "userSelectionRequired": false,
@@ -210,17 +352,17 @@
       "docs/PROJECT_STATUS.md"
     ],
     "publicUrlDiscovery": "/ai-context.json",
-    "readLocalContextBeforeParentRules": true
+    "readLocalContextBeforeParentRules": true,
+    "publicContextMustFollowPublicContextPolicy": true
   },
   "policies": {
     "splitByResponsibilityFromStart": true,
     "selfDescribingRepository": true,
     "githubActionsByDefault": false,
     "preserveBehaviorOutsideRequestedScope": true,
-    "destructiveOperationsRequireExplicitUserIntentAndRecoveryPlan": true,
-    "doNotOverwriteOnShaConflict": true,
-    "refetchAndReapplyOwnDiffOnConflict": true,
-    "doNotRemoveConcurrentChangesWithoutExplicitReason": true,
-    "securityIncidentContainmentPrecedesNormalRecovery": true
+    "securityIncidentContainmentPrecedesNormalRecovery": true,
+    "doNotSilentlyExpandScope": true,
+    "doNotSilentlyFallback": true,
+    "doNotReportFakeSuccess": true
   }
 }
