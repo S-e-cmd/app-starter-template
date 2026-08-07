@@ -1,8 +1,17 @@
 {
   "schemaVersion": 1,
   "name": "app-starter-template",
-  "purpose": "Canonical AI-readable starter source for populating newly created empty application repositories and for continued maintenance.",
+  "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created empty application repositories, guiding deployment, and continued maintenance.",
   "defaultTemplate": "core",
+  "creationFlow": {
+    "required": true,
+    "protocol": "docs/CREATE_AND_DEPLOY_FLOW.md",
+    "guideRepositorySettingsBeforeCreation": true,
+    "populateEmptyRepositoryAfterUrlProvided": true,
+    "guideDeploymentAfterImplementation": true,
+    "cloudflareSettingsMustBeDerivedFromActualRepository": true,
+    "userChoosesTemplate": false
+  },
   "bootstrap": {
     "required": true,
     "protocol": "docs/BOOTSTRAP_PROTOCOL.md",
@@ -22,7 +31,7 @@
     "mode": "ai-populate-empty-repository",
     "humanTemplateCopyRequired": false,
     "githubUseThisTemplateRequired": false,
-    "instruction": "The user creates a new empty repository and provides its URL plus application requirements. The AI must complete the bootstrap protocol first, infer the required composition, populate the required starter and handoff files, and only then implement application-specific features. Do not ask the user to use GitHub's Use this template flow unless they explicitly prefer it."
+    "instruction": "First provide concrete GitHub repository creation settings. After the user provides the empty repository URL, complete the bootstrap protocol, infer the required composition, populate the starter and handoff files, and implement application-specific features. If deployment is required, inspect the actual repository configuration before giving concrete Cloudflare settings. Do not ask the user to use GitHub's Use this template flow unless they explicitly prefer it."
   },
   "selectionPolicy": {
     "userSelectionRequired": false,
@@ -56,6 +65,7 @@
     }
   },
   "rules": {
+    "creationAndDeployment": "docs/CREATE_AND_DEPLOY_FLOW.md",
     "bootstrap": "docs/BOOTSTRAP_PROTOCOL.md",
     "development": "docs/DEVELOPMENT_RULES.md",
     "architecture": "docs/ARCHITECTURE_RULES.md",
