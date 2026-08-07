@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "app-starter-template",
-  "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created application repositories, guiding deployment, non-destructive existing-app alignment, post-launch feature changes, and continued maintenance.",
+  "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created application repositories, guiding deployment, non-destructive existing-app alignment, post-launch feature changes, high-risk recovery and migration work, and continued maintenance.",
   "defaultTemplate": "core",
   "creationFlow": {
     "required": true,
@@ -66,6 +66,41 @@
     "verifyPublishedBuildWhenDeploymentChanges": true,
     "instruction": "For normal post-launch feature additions, UI improvements, integrations, and small specification changes, follow docs/FEATURE_CHANGE_PROTOCOL.md. Inspect the current implementation and affected scope first, reuse existing compatible parts, preserve existing behavior and data contracts, keep unrelated refactoring out of the change, split only responsibilities directly justified by the feature, regression-check the affected and adjacent behavior, update the relevant handoff docs, and verify the published build when deployment is involved."
   },
+  "highRiskOperations": {
+    "enabled": true,
+    "normalFeatureProtocolMustYieldWhenMatched": true,
+    "incidentRecovery": {
+      "protocol": "docs/INCIDENT_RECOVERY_PROTOCOL.md",
+      "preferRollbackWhenCauseUnknownOrRepeatedFixesWouldBeNeeded": true,
+      "doNotStackSpeculativeFixesOnBrokenState": true,
+      "separateRecoveryFromPermanentFix": true
+    },
+    "dataMigration": {
+      "protocol": "docs/DATA_MIGRATION_PROTOCOL.md",
+      "preserveBackwardCompatibilityByDefault": true,
+      "requireRollbackOrRecoveryPlan": true,
+      "doNotDeleteOldCompatibilityBeforeRealDataVerification": true
+    },
+    "environmentChange": {
+      "protocol": "docs/ENVIRONMENT_CHANGE_PROTOCOL.md",
+      "inspectActualSettingsBeforeChanging": true,
+      "preserveExistingNamesAndDeploymentByDefault": true,
+      "requireConcreteUserStepsWhenManualActionIsNeeded": true
+    },
+    "cleanupDeletion": {
+      "protocol": "docs/CLEANUP_DELETION_PROTOCOL.md",
+      "unusedLookingIsNotSufficientEvidence": true,
+      "checkDynamicAndExternalReferences": true,
+      "deleteLateAndInSmallBatches": true
+    },
+    "dependencyUpdate": {
+      "protocol": "docs/DEPENDENCY_UPDATE_PROTOCOL.md",
+      "doNotMixMajorUpdatesWithFeatureWork": true,
+      "requireCompatibilityAndRollbackCheck": true,
+      "doNotUpgradeOnlyForConformance": true
+    },
+    "instruction": "When a task becomes a production incident, data migration, environment/configuration change, cleanup/deletion task, or dependency/runtime update, stop treating it as an ordinary feature change and switch to the matching dedicated protocol. For incidents, do not keep overwriting a broken state with speculative fixes: identify the last known-good build or commit and prefer rollback when the cause is unclear, the failure is broad, or one attempted fix did not restore service. Restore normal operation first, then investigate and implement a permanent fix in a separate batch."
+  },
   "bootstrap": {
     "required": true,
     "protocol": "docs/BOOTSTRAP_PROTOCOL.md",
@@ -123,6 +158,11 @@
     "existingAppAlignment": "docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md",
     "existingAppBatchCompletion": "docs/BATCH_COMPLETION_CHOICES.md",
     "featureChange": "docs/FEATURE_CHANGE_PROTOCOL.md",
+    "incidentRecovery": "docs/INCIDENT_RECOVERY_PROTOCOL.md",
+    "dataMigration": "docs/DATA_MIGRATION_PROTOCOL.md",
+    "environmentChange": "docs/ENVIRONMENT_CHANGE_PROTOCOL.md",
+    "cleanupDeletion": "docs/CLEANUP_DELETION_PROTOCOL.md",
+    "dependencyUpdate": "docs/DEPENDENCY_UPDATE_PROTOCOL.md",
     "bootstrap": "docs/BOOTSTRAP_PROTOCOL.md",
     "development": "docs/DEVELOPMENT_RULES.md",
     "architecture": "docs/ARCHITECTURE_RULES.md",
