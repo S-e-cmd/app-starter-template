@@ -8,6 +8,18 @@
 - 既存機能、既存データ、既存APIの互換性を維持する。
 - 依頼されていない全面書き直し、大規模レイアウト変更、ライブラリ置換を行わない。
 
+## 高リスク変更への切替
+
+通常の機能追加中でも、次に該当した時点で `FEATURE_CHANGE_PROTOCOL.md` より専用プロトコルを優先します。
+
+- 公開障害、起動不能、主要機能停止、データ消失疑い → `INCIDENT_RECOVERY_PROTOCOL.md`
+- LocalStorage / D1 / Sheets / KV / R2 / JSON / API等の形式変更・移行 → `DATA_MIGRATION_PROTOCOL.md`
+- Cloudflare / GAS / GitHub連携 / Binding / Secret / Variable等の環境設定変更 → `ENVIRONMENT_CHANGE_PROTOCOL.md`
+- 不要コード・ファイル・旧API・互換処理等の削除整理 → `CLEANUP_DELETION_PROTOCOL.md`
+- ライブラリ、SDK、ランタイム、ビルド基盤等の更新 → `DEPENDENCY_UPDATE_PROTOCOL.md`
+
+障害時は特に、壊れた状態へ推測修正を重ねません。原因が不明、影響が広い、または1回の限定修正で復旧しない場合は、最後に正常だった状態へのロールバックを優先し、復旧後に恒久修正を別バッチで行います。
+
 ## 変更前
 
 1. 対象機能と関連ファイルを確認する。
