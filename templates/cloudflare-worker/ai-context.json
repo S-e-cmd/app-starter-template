@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "template": {
+    "name": "cloudflare-worker",
+    "repository": "S-e-cmd/app-starter-template",
+    "parent": "../core",
+    "manifest": "../../manifest.json"
+  },
+  "responsibilities": {
+    "routes": "worker/routes",
+    "services": "worker/services",
+    "repositories": "worker/repositories"
+  },
+  "maintenance": {
+    "keepEntryPointThin": true,
+    "githubActionsByDefault": false
+  }
+}
