@@ -3,11 +3,26 @@
   "name": "app-starter-template",
   "purpose": "Canonical AI-readable starter source for populating newly created empty application repositories and for continued maintenance.",
   "defaultTemplate": "core",
+  "bootstrap": {
+    "required": true,
+    "protocol": "docs/BOOTSTRAP_PROTOCOL.md",
+    "mustCompleteBeforeApplicationImplementation": true,
+    "targetWithoutAiContextIsUnbootstrapped": true,
+    "requiredFiles": [
+      "ai-context.json",
+      "llms.txt",
+      "docs/ARCHITECTURE.md",
+      "docs/DATA_CONTRACT.md",
+      "docs/UI_RULES.md",
+      "docs/PROJECT_STATUS.md"
+    ],
+    "completionCheck": "docs/TEMPLATE_CHECKLIST.md"
+  },
   "deploymentPolicy": {
     "mode": "ai-populate-empty-repository",
     "humanTemplateCopyRequired": false,
     "githubUseThisTemplateRequired": false,
-    "instruction": "The user creates a new empty repository and provides its URL plus application requirements. The AI reads this manifest and the applicable rules, infers the required composition, and writes the starter files and initial application implementation into that target repository. Do not ask the user to use GitHub's Use this template flow unless they explicitly prefer it."
+    "instruction": "The user creates a new empty repository and provides its URL plus application requirements. The AI must complete the bootstrap protocol first, infer the required composition, populate the required starter and handoff files, and only then implement application-specific features. Do not ask the user to use GitHub's Use this template flow unless they explicitly prefer it."
   },
   "selectionPolicy": {
     "userSelectionRequired": false,
@@ -41,6 +56,7 @@
     }
   },
   "rules": {
+    "bootstrap": "docs/BOOTSTRAP_PROTOCOL.md",
     "development": "docs/DEVELOPMENT_RULES.md",
     "architecture": "docs/ARCHITECTURE_RULES.md",
     "ui": "docs/UI_RULES.md",
