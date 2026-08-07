@@ -26,14 +26,26 @@
 - stable IDがない場合、provider / account / project / parent hierarchyまで含めて同名resourceを区別した。
 - display nameやaliasだけで同一resourceとみなしていない。
 - alias / Binding名を同一resourceへcanonicalizeする場合、stable IDまたは実設定mappingをconfirmedした。
+- mapping確認後にBinding / environment変更があった場合、古いmappingをreuseせず再確認した。
+- 高リスクmutation実行前にidentity mappingの鮮度が必要なら再確認した。
 - parent resourceへ丸めて一致させていない。
+- clone / restore / delete→recreate / replacement / provider migrationでstable IDが変わったresourceを「同じ役割だから同一」とみなしていない。
 - rename前後を同一identityとする場合、stable provider ID継続をconfirmedした。
 - rename authorizationをrename後の別operationへ継承していない。
 - operation-typeはverb文字列ではなくside effect / reversibility / contract boundary / security consequenceで正規化した。
-- target-scopeはexact affected set。
+- `cascade / overwrite / force / replace-existing / delete-source-after-copy / dry-run` 等、side effectを変えるoptionをfingerprint判定から落としていない。
+- target-scopeは承認された対象集合またはpredicateを正確に表現している。
 - filter表記差を同一scopeにする場合、type / NULL / collation / timezone / parameter semanticsまで保ったdeterministic equivalenceを確認した。
-- dynamic time rangeやruntime parameterが変わるscopeを文字列だけで再利用していない。
+- OR / NOT / IN / implicit cast / floating point / cursor / pagination / server-side filter / RLS等で同値が証明できない場合、無理にcanonicalizeしていない。
 - subset / supersetを同じscopeとみなしていない。
+
+## dynamic scope
+
+- authorizationが **concrete-set** か **predicate** かを区別した。
+- concrete-setならrecord ID / snapshot / boundsが変わった集合へauthorizationをreuseしていない。
+- predicate authorizationなら、userが「execution時にこの条件へ一致する全対象」を承認していることを確認した。
+- predicate、parameter、RLS、implicit filter、cursor基準等が変わった場合は別scopeとして再判定した。
+- dynamic setが増減しただけで、承認済みpredicateまで機械的に毎回再authorizationして過剰停止していない。
 
 ## plan authorization
 
@@ -41,9 +53,10 @@
 
 - planにfingerprint集合を事前列挙した。
 - userが列挙済み集合を一括承認した場合、各operation前の再確認を強制していない。
-- plan名だけで未列挙operationをauthorizationしていない。
-- plan revisionでfingerprintが追加・変更された場合、新規/変更fingerprintだけ追加authorizationを求めた。
-- 既承認で未変更のfingerprintを不必要に再確認していない。
+- plan名 / revision labelだけで未列挙operationをauthorizationしていない。
+- planの正本を実fingerprint集合として扱った。
+- 同じplan名のままfingerprint集合が変わった場合、新規/変更fingerprintを再authorizationした。
+- 説明文や並び順だけ変わりfingerprint集合が同一なら、不必要に再authorizationしていない。
 
 ## ブートストラップ完了ゲート
 
@@ -52,7 +65,7 @@
 - top-level `schemaVersion` と `starter.schemaVersion` を別概念として扱っている。
 - `schemaVersionMeaning` が一致する対象同士だけ比較している。
 - parent starter schemaが新しくなっただけでlocal ai-context schema mismatchと誤判定していない。
-- 古いappがbootstrap時starter versionを保持していることだけでlocal migrationを強制していない。
+- parent schemaのbreaking changeがあっても、それだけをlocal app restructure / migration authorizationにしていない。
 - public ai-context / llms.txtにSecret、internal-only URL、private identifier、個人情報、未修正脆弱性詳細等がない。
 - public fieldはfield名だけでなく実値を確認した。
 - bootstrapだけを理由に既存codeをrefactor / rename / move / deleteしていない。
@@ -75,21 +88,13 @@
 
 ## dependent hold
 
-hold伝播が必要な場合:
+hold伝播が必要なのは、後続作業がblocked inputを直接使用する、blocked contractで実装内容が変わる、またはsafety / authorization判断がblocked結果に依存する場合です。
 
-- 後続作業がblocked inputを直接使用する、または
-- blocked contractの結果で実装内容が変わる、または
-- safety / authorization判断がblocked結果に依存する。
-
-次だけでholdを広げていない:
-
-- 同じfile。
-- 同じscreen。
-- 同じfeature group。
-- 間接的に関係する可能性。
-- 念のため。
-
-独立したin-scope作業は継続した。
+- 実際のinput / contract / safety / authorization依存を確認した。
+- 同じfile / screen / module / feature groupというだけでholdを広げていない。
+- 「間接的に関係する可能性」だけで全面停止していない。
+- 逆に、blocked結果を実際に使う後続作業を「別fileだから」と進めていない。
+- 独立したin-scope作業は継続した。
 
 ## 障害・復旧
 
@@ -125,7 +130,9 @@ hold伝播が必要な場合:
 - cron / trigger / scheduled job / consumer変更をProduction Mutationとして扱った。
 - production import / bulk rewrite等をProduction Mutationとして扱った。
 - 新resource作成で既存Binding / routing / storage / targetが切り替わる場合はProduction Mutationとして扱った。
-- 独立resource作成でも、paid cost / public exposure / privileged access / production data copy / significant name reservation / retention obligationがある場合は無害なcode edit扱いにしていない。
+- 独立resource作成でも、cost / quota / future auto-billing / public exposure / credential issuance / privileged access / production data copy / significant name reservation / audit-retention-complianceがある場合はrisk gateを通した。
+- Creation Flowで具体的構成とrisk特性を既に承認済みなら、同一範囲のresource作成を毎回再確認して過剰停止していない。
+- 承認後にmaterial riskが増えた場合だけ追加authorization / choiceを求めた。
 - tool capabilityだけでresource作成をauthorization済みとみなしていない。
 
 ## 削除・rename
@@ -158,6 +165,8 @@ hold伝播が必要な場合:
 ## verificationと完了状態
 
 - verification criteriaを固定列挙だけでなく、現在のdirect-changeの目的状態から導出した。
+- 複数目的の依頼ではoutcome単位でverified / blocked / pendingを保持した。
+- 一部outcomeの成功を依頼全体のcompleteへ一般化していない。
 - adjacent regression checkは因果的に関連する範囲だけ追加した。
 - requested outcomeと無関係な独立機能を完了条件へ勝手に追加していない。
 - 保存修正なら保存 / 必要なreload persistenceを確認した。
@@ -167,9 +176,20 @@ hold伝播が必要な場合:
 
 全体状態:
 
-- **完了** — direct-changeから導出した必要変更と検証が完了。
-- **作業完了 / 検証保留** — 変更は完了したが必要検証の一部blocked。
+- **完了** — direct-changeから導出した全required outcomeの必要変更と検証が完了。
+- **作業完了 / 検証保留** — 変更は完了したがrequired outcomeの必要検証の一部blocked。
 - **未完了** — 実装・復旧・移行・設定変更そのものに残作業がある。
+
+## rule complexity / 収束確認
+
+新しい境界を見つけた場合:
+
+- まず既存ruleで判定できないか確認した。
+- 新概念を作らず既存ruleの説明改善で済むなら、ruleを追加していない。
+- 同じ概念を別名称で増やしていない。
+- manifestへ自然言語Protocolを過剰に詰め込んでいない。
+- 同じruleを確認するだけのcaseを無制限に追加していない。
+- 重大な抜け道がなければ、rule追加より重複整理・実app適用・過剰停止確認を優先した。
 
 ## 解釈一致テスト
 
@@ -177,16 +197,17 @@ hold伝播が必要な場合:
 
 重点:
 
-- stable ID / account / project / alias / renameによるresource identity。
-- equivalent / non-equivalent / dynamic target-scope。
-- operation side effect normalization。
-- enumerated plan approvalとplan revision。
+- stable ID lifetime / clone / restore / recreate / replacement。
+- stale alias / Binding mapping。
+- query semanticsとdynamic predicate / concrete-set scope。
+- side effectを変えるoperation option / flag。
+- enumerated plan approvalと実fingerprint集合。
 - inferred / unknown riskのscope拡大。
 - security Evidenceとexplicit authorization。
 - dependent holdの不足・過大伝播。
-- direct-change別のcompletion criteria。
-- independent resource creation risk。
+- 複数direct-change outcomeのcompletion criteria。
+- independent resource creation riskと既承認Creation Flow。
 - schema version drift。
 - silent fallback / fake success / partial verification。
 
-同じcaseで別AIのscope、Evidence、authorization、Production Mutation、continuation、Protocolが大きく割れる場合は、rule不足または表現曖昧として扱います。
+同じcaseで別AIのscope、Evidence、authorization、Production Mutation、continuation、completion、Protocolが大きく割れる場合は、rule不足または表現曖昧として扱います。
