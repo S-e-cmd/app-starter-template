@@ -2,7 +2,7 @@
 
 Cloudflare、GAS、GitHub連携、Secrets、Variables、Bindings、外部API、trigger / scheduled job等の環境設定を変更する場合の手順です。
 
-Production Mutationの定義、authorization fingerprint、Evidence、情報源優先順位、blocked / unknownの扱いは `docs/PROTOCOL_ROUTING_RULES.md` を正本とします。このProtocolでは環境変更固有の確認・実施・検証手順だけを定義します。
+Production Mutationの定義、authorization fingerprint、resource creation risk、Evidence、情報源優先順位、blocked / unknownの扱いは `docs/PROTOCOL_ROUTING_RULES.md` を正本とします。このProtocolでは環境変更固有の確認・実施・検証手順だけを定義します。
 
 ## 基本原則
 
@@ -21,9 +21,25 @@ Production Mutationの定義、authorization fingerprint、Evidence、情報源�
 4. 公開URL、自動deploy、GAS deployment、cron / trigger、外部API等への影響を確認する。
 5. applicableなenvironment settings backup / 現在値記録を残す。
 6. 対象操作がProduction Mutationか中央ruleで判定する。
-7. Production Mutationなら `environment / resource / operation-type / target-scope` のauthorization fingerprintを確認する。
+7. Production Mutationならnormalized fingerprintを確認する。
+8. 独立resource作成なら、Production Mutationでなくても中央resource creation risk gateを確認する。
 
 広い「環境も整えて」「本番変更も含めて対応」は、個別のSecret削除、Binding改名、production branch変更、trigger追加、access control変更、Worker / Project削除等への包括authorizationではありません。
+
+## 独立resource作成
+
+新resourceが既存productionへまだ接続されていなくても、次がある場合は無害なcode editと同列に扱いません。
+
+- paid / metered cost。
+- external public exposure。
+- privileged access / permission追加。
+- production data copy / import。
+- operationally significant name reservation。
+- retention / compliance obligation。
+
+該当する場合は、作成対象・side effect・費用/公開/権限/data影響を示し、現在taskでauthorizationまたはuser choiceがあるか確認します。
+
+resource作成authorizationと、その後のBinding / routing / storage / target切替authorizationは分離します。
 
 ## 実施
 
@@ -47,6 +63,7 @@ Production Mutationの定義、authorization fingerprint、Evidence、情報源�
 - API / Binding / Secret / Variable参照が正常か。
 - access control / permissionが意図した対象だけ変わったか。
 - cron / trigger / scheduled jobが意図したschedule・targetで動作するか。
+- 新resource作成時は、意図しないpublic exposure / privileged access / production connection / data copyがないか。
 - 自動deployや外部integrationが維持されているか。
 - 対象機能が目的状態になっているか。
 - build番号は中央build policyまたはapp固有policyと整合しているか。
@@ -56,7 +73,7 @@ blocked項目が今回の変更判断に無関係なら、他のin-scope確認�
 ## 禁止事項
 
 - 実設定を見ず固定値を案内する。
-- tool権限だけを理由にproduction設定を変更する。
+- tool権限だけを理由にproduction設定または有料/公開/privileged resourceを作成する。
 - authorization fingerprintの一部だけ一致した別操作へ許可を継承する。
 - inferenceだけを設定変更の根拠にする。
 - code側だけ変更してenvironment変更を記録しない。
@@ -65,4 +82,4 @@ blocked項目が今回の変更判断に無関係なら、他のin-scope確認�
 
 ## 記録
 
-`docs/ARCHITECTURE.md` または `docs/PROJECT_STATUS.md` に、確認した情報源、変更したenvironment項目、authorization fingerprint、維持した設定、user操作が必要だった箇所、verified / blocked項目、確認結果を記録します。
+`docs/ARCHITECTURE.md` または `docs/PROJECT_STATUS.md` に、確認した情報源、変更したenvironment項目、authorization fingerprint、resource creation side effect、維持した設定、user操作が必要だった箇所、verified / blocked項目、確認結果を記録します。
