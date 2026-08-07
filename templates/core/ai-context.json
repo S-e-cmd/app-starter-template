@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "starter": {
-    "schemaVersion": 2,
+    "schemaVersion": 3,
     "bootstrapTemplateCommitSha": "SET_AT_BOOTSTRAP",
     "bootstrapTemplateRevision": "SET_AT_BOOTSTRAP",
     "currentParentManifestUrl": "https://raw.githubusercontent.com/S-e-cmd/app-starter-template/main/manifest.json"
@@ -27,7 +27,23 @@
   },
   "publicSafety": {
     "thisFileMayBePublic": true,
-    "excludeSecretsInternalUrlsPrivateIdentifiersPersonalDataAndVulnerabilityDetails": true
+    "validateActualValuesBeforePublishing": true,
+    "allowedCategories": [
+      "public-app-name-and-type",
+      "public-repository-reference-when-repository-is-public",
+      "public-entrypoint-and-high-level-responsibility-names",
+      "public-safe-build-and-template-metadata"
+    ],
+    "excludedCategories": [
+      "secrets-and-credentials",
+      "internal-only-urls",
+      "private-resource-identifiers",
+      "personal-data",
+      "private-repository-confidential-information",
+      "unfixed-vulnerability-details",
+      "operationally-sensitive-internal-information"
+    ],
+    "doNotCopyRepositoryInternalContextWithoutFiltering": true
   },
   "handoff": {
     "readLocalContextFirst": true,
