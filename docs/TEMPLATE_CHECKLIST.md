@@ -1,178 +1,113 @@
 # Template Validation Checklist
 
-新規アプリ作成時、継続改修時、既存アプリ非破壊整備時、高リスク変更時に、GitHub Actionsへ依存せずその場で確認するためのチェックリストです。
+新規作成、通常更新、既存アプリ整備、高リスク変更で、`docs/PROTOCOL_ROUTING_RULES.md` と `manifest.json` の中央判断を実際の作業へ適用できているか確認するためのチェックリストです。
 
-## 最初のルーティング確認
+## 共通ゲート
 
-作業開始前に `docs/PROTOCOL_ROUTING_RULES.md` を確認します。
-
-- Repo URLや公開URLがあるだけで整備モードを選んでいない。
-- ユーザーの現在の目的から主作業モードを決めた。
-- 明示的な仕様変更範囲は変更対象として扱い、依頼範囲外だけを保護している。
-- 高リスク条件が発生した部分だけ専用プロトコルへ切り替えている。
-- 複数該当時は、障害復旧 → データ保全/移行 → 環境 → 更新 → 整備 → 削除整理の優先順位を基準にしている。
+- 主作業モードをユーザーの現在目的から選んだ。
+- Repository URL / 公開URL / starter参照の存在だけで整備モードを選んでいない。
+- `direct-change / required-propagation / out-of-scope` を区別した。
+- 「改善できる」「関連している」「同じfile」「fileが長い」だけをscope拡大理由にしていない。
+- `confirmed / inferred / unknown` を区別した。
+- 不要、未使用、原因、正常、安全等をEvidenceなしで断定していない。
+- tool上の実行権限とユーザーの変更authorizationを混同していない。
+- Production Mutationの対象とauthorization状態を確認した。
+- generated / derived fileのsourceがある場合、生成物だけを手修正していない。
+- 既存仕様にないsilent fallbackを追加・使用していない。
 
 ## ブートストラップ完了ゲート
 
-新規アプリでは、アプリ固有機能の実装完了より先に `docs/BOOTSTRAP_PROTOCOL.md` を満たしてください。
+新規アプリでは `docs/BOOTSTRAP_PROTOCOL.md` を先に満たします。
 
-- `ai-context.json` がアプリ直下にある。
-- `llms.txt` がアプリ直下にある。
-- `docs/ARCHITECTURE.md` がある。
-- `docs/DATA_CONTRACT.md` がある。
-- `docs/UI_RULES.md` がある。
-- `docs/PROJECT_STATUS.md` がある。
-- `ai-context.json` から親テンプレートの公開 `manifest.json` へ戻れる。
-- `core` が適用されている。
-- 要件に応じた追加構成だけが適用されている。
-- 責務分割済みの基盤がある。
+- `ai-context.json` / `llms.txt` / `docs/ARCHITECTURE.md` / `docs/DATA_CONTRACT.md` / `docs/UI_RULES.md` / `docs/PROJECT_STATUS.md` がある。
+- `ai-context.json` に starter schemaVersion、bootstrap時template commit SHA、bootstrap時revision、current parent manifest URLがある。
+- public `ai-context.json` / `llms.txt` にSecret、内部専用URL、private identifier、個人情報、未修正脆弱性詳細等が含まれていない。
+- 既存コードがある場合、bootstrapだけを理由にrefactor・rename・移動・削除していない。
+- 後から変更コストの高いvisibility、auth、永続保存先、個人情報保存、課金service、公開範囲等を根拠なく推測していない。
 
-READMEやアプリ固有コードだけが存在しても、上記が欠けていれば新規アプリの初期実装は未ブートストラップです。
+## 通常の機能追加・修正
 
-既存アプリに `ai-context.json` がないことだけを理由に、新規アプリとして再構築しません。
+- `FEATURE_CHANGE_PROTOCOL.md` を使用した。
+- 直接変更とrequired-propagationだけを変更した。
+- 類似機能・共通部品を確認したが、再利用のために不要な結合を増やしていない。
+- 無関係なrefactor・cleanupを混在させていない。
+- API / data contract / LocalStorage key / D1 schema / Sheets列 / Binding等を未許可で壊していない。
+- 検証中に見つけた無関係問題は別taskへ回した。
 
-## 新規アプリ作成時
+## 既存アプリ非破壊整備
 
-- ユーザーへ `Use this template` を要求していない。
-- ユーザーへ CORE / Worker / D1 / Sheets-GAS の選択を要求していない。
-- AIが要件から構成を判断した。
-- `index.html` から `/ai-context.json` を発見できる。
-- ビルド番号が `YYYYMMDD-NN` 形式で画面と設定に反映されている。
-- UI、通信、保存、状態管理、業務処理が責務別に分離されている。
-- GitHub Actionsが理由なく追加されていない。
+- template準拠を目的にしていない。
+- `ARCHITECTURE_RULES.md` の新規アプリ用directory例へ既存アプリを寄せていない。
+- 整備候補がscope外なら記録だけにした。
+- ユーザーが「完了まで」「ロードマップ通り」等の継続を既に許可している場合、機械的に毎batch停止していない。
+- scope拡大、Production Mutation、新たな高リスク操作、実質的な方針選択が必要な場合は停止してauthorization / choiceを確認した。
 
-## 既存アプリ非破壊整備時
+## 障害・復旧
 
-`docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md` を使用します。
+- code / deployment / environment / data-schema / external API compatibilityを必要に応じて別軸で確認した。
+- last known goodを単なる直前commitとみなしていない。
+- 原因不明のまま推測修正を積み重ねていない。
+- rollback前にcode-data互換、environment互換、migration後data影響、失われる正常変更、復元targetの存在、external API互換を確認した。
+- rollbackがより危険なら、根拠のある限定roll-forwardを選択可能としている。
+- force push / history rewriteを通常復旧手段にしていない。
+- HTTP 200 / deploy成功 / 画面表示だけで復旧成功とみなしていない。
 
-- 主目的が全体整理・安定化・引き継ぎ改善であり、単なる機能追加ではない。
-- テンプレート準拠を目的にしていない。
-- 既存構成をテンプレートのディレクトリ構成へ変換していない。
-- テンプレートとの差分だけを理由に変更していない。
-- 依頼範囲外の既存機能、主要UIフロー、データ契約、API、公開方式を保護対象として扱った。
-- LocalStorageキー、D1 schema、Sheets列、JSON形式、既存ID、Binding、Secret / Variable名、公開URLを不用意に変更していない。
-- 1バッチで扱う範囲を限定した。
-- `確認 → 修正 → 回帰確認 → 記録` を同じバッチ内で完結させた。
-- `PROJECT_STATUS.md` に変更範囲、確認済み範囲、未確認範囲、残タスク、意図的な例外を記録した。
-- バッチ終了時に整備必要度と説明付き選択肢を提示した。
+## データ移行・実データ
 
-## 機能追加・修正時
+- code / schema / actual data / environment settingsのbackup・recoveryを別々に確認した。
+- Git historyだけを実data backupとみなしていない。
+- 実data検証は `read-only → copy/snapshot/staging → new isolated test record → modify existing production data` の順で安全側を優先した。
+- 既存production実data変更はoperation-specific authorizationなしに行っていない。
+- migration対象範囲、旧形式残存、rollback要否、旧client / external consumerを確認するまで互換処理を削除していない。
 
-`docs/FEATURE_CHANGE_PROTOCOL.md` を使用します。
+## 環境・Production Mutation
 
-- ユーザーが明示的に変更したい範囲と、維持すべき範囲を分けた。
-- 変更対象と関連ファイルを先に確認した。
-- 呼び出し元・呼び出し先・共有状態を確認した。
-- 既存の類似機能・共通部品を確認した。
-- 再利用が不要なアプリ間依存や複雑な互換層を増やさないことを確認した。
-- 保存先、API、外部サービス、公開方式への影響を確認した。
-- 新しい責務を既存巨大ファイルへ安易に追記していない。
-- 無関係な大規模リファクタリングを混在させていない。
-- APIや保存形式の互換性を確認した。
-- 追加機能に隣接する既存操作を回帰確認した。
-- 検証中に見つけた無関係な既存問題を「ついで」に修正していない。
-- 必要なdocsとビルド番号を更新した。
+- 実稼働設定 → deployment metadata → production branch設定file → handoff docs → README → inference の順を基準に確認した。
+- inferenceを設定変更の根拠にしていない。
+- Production Mutationを `not-authorized / authorized-for-this-operation / already-approved-in-current-task` で扱った。
+- 広い「本番も対応」依頼をSecret削除・schema破壊・URL変更等の包括許可とみなしていない。
 
-## 障害・復旧時
+## 削除・rename
 
-`docs/INCIDENT_RECOVERY_PROTOCOL.md` を優先します。
+- repo内部参照ゼロだけで未使用と断定していない。
+- external consumer確認不能な公開API / URL / storage key / GAS function等を「利用状況不明」と扱った。
+- 単一renameでもAPI route、Binding、storage key、exported function、GAS function等のcontract boundaryは破壊的変更として扱った。
 
-- 通常の機能追加・整備を中断した。
-- 現在の症状、直前変更、公開ビルドを記録した。
-- `last known good` を「確認済み正常状態」として特定した。未確認なら候補として扱った。
-- 原因不明のまま推測修正を重ねていない。
-- 「1回の限定修正」は、原因仮説1つ → 小変更 → 対象環境反映 → 復旧確認までの1サイクルとして数えた。
-- 1回の限定修正で戻らない場合や影響が広い場合、ロールバックを第一候補にした。
-- ロールバックでは原則として `revert` や正常版を新commitとして復元するなど、履歴を壊さない方法を優先した。
-- force push / resetによる履歴改変を通常手段にしていない。
-- Cloudflare等だけ戻した場合、GitHubとの不一致を記録した。
-- まず正常稼働を復旧し、原因調査・恒久修正を別バッチに分けた。
-- セキュリティ事故ではSecret/token失効等の封じ込めを先に行った。
+## 依存更新
 
-## データ移行時
+- direct dependencyだけでなくtransitive dependencyとlockfile差分を確認した。
+- major updateを通常機能追加と混在させていない。
+- 重大脆弱性対応ではセキュリティ封じ込め・緊急updateを優先しつつ、互換・rollback評価を省略していない。
 
-`docs/DATA_MIGRATION_PROTOCOL.md` を優先します。
+## UI
 
-- 現在の保存先と旧データ形式を確認した。
-- バックアップまたは復旧手段を確認した。
-- migration失敗時の戻し方を決めた。
-- 旧データ読み込み互換を原則維持した。
-- migrationを再実行しても二重変換・重複が起きない。
-- 実データ確認前に旧キー・列・schema・互換処理を削除していない。
-- migration完了確認後に必要なcleanupを別段階で行った。
-- `DATA_CONTRACT.md` と `PROJECT_STATUS.md` を更新した。
+- 見栄え改善で情報量・一覧性・操作数・主要導線を悪化させていない。
+- SP対応のためPC版を悪化させていない。
+- 画面幅だけを理由に主要機能を削除していない。
+- 対象に応じ、押下領域、scroll、overflow、modal close、focus、keyboard、gesture、fixed/sticky、z-index等を確認した。
 
-## 環境・設定変更時
+## build number
 
-`docs/ENVIRONMENT_CHANGE_PROTOCOL.md` を優先します。
+- 公開code / UI / runtime behavior / deployed assetが変わった場合はapp固有policyまたは `YYYYMMDD-NN` 共通policyに従って更新した。
+- docs / READMEのみなら原則buildを上げていない。
+- rollback / roll-forwardで公開内容が変わった場合、過去build番号を新変更として再利用していない。
 
-- 実際の現在設定を確認した。
-- Project/Worker名、branch、Bindings、Secrets、Variables、公開URLを記録した。
-- 既存設定をテンプレート既定値へ理由なく置換していない。
-- ユーザー操作が必要な場合、画面・項目・入力値・確認方法まで具体的に示した。
-- Secret値をリポジトリへ保存していない。
-- 設定変更後にデプロイ、公開URL、API/Binding参照を確認した。
+## 検証と完了状態
 
-## 削除・整理時
+重要項目を `verified / blocked / not-applicable` で扱う。
 
-`docs/CLEANUP_DELETION_PROTOCOL.md` を優先します。
+blockedの場合:
 
-- 「使っていなさそう」だけで削除していない。
-- 静的参照、動的参照、HTML、Worker、GAS、設定、外部連携、互換処理を確認した。
-- migration確認前の互換処理を削除していない。
-- 削除範囲を小さなバッチへ限定した。
-- 大量削除・一括rename・大規模移動を同じバッチに混在させていない。
-- 削除前後の主要機能差分を確認した。
+- 実施不能理由を記録した。
+- 代替確認を記録した。
+- 残存riskを記録した。
 
-## 依存・ランタイム更新時
+全体状態:
 
-`docs/DEPENDENCY_UPDATE_PROTOCOL.md` を優先します。
-
-- 更新理由を明確にした。
-- 現在バージョンと利用箇所を確認した。
-- breaking changes、deprecated API、実行環境互換を確認した。
-- major updateを機能追加と同じバッチに混在させていない。
-- 障害原因の依存変更なら障害復旧を優先した。
-- 元バージョンへ戻せる状態を確保した。
-- インストール/ビルド、主要機能、API通信、保存、公開環境を確認した。
-
-## 破壊的操作の共通確認
-
-次に該当する操作は、ユーザーの明示的な意図、影響範囲、復旧方法を確認した。
-
-- 実データ削除・初期化
-- 破壊的schema変更
-- Sheets列/シート削除
-- LocalStorage key廃止
-- API互換破壊
-- Project / Worker / repository削除
-- 公開URL変更
-- Binding / Secret / Variable削除・改名
-- force push / 履歴改変
-- 大量削除・rename
-
-## 同時編集・競合
-
-- 書き込み時にSHA競合が発生したら、古い内容で上書きしていない。
-- 最新版を再取得した。
-- 他者/別Chatの変更を残したまま、自分の差分だけを再適用した。
-- 競合解消を理由に他の正常変更を消していない。
-
-## 完了状態
-
-次の3状態を使用します。
-
-- **完了** — 作業と必要検証が完了。
-- **作業完了 / 検証保留** — 変更自体は完了したが、外部環境・権限・公開取得不可等で必要検証の一部が残る。
+- **完了** — 必要な変更と検証が完了。
+- **作業完了 / 検証保留** — 変更は完了したが必要検証の一部がblocked。
 - **未完了** — 実装・復旧・移行・設定変更そのものに残作業がある。
 
-未確認を成功扱いにも失敗扱いにもせず、何が未確認かと再開地点を記録します。
+必要に応じ、implementation / deployment / verification / documentation を `complete / pending / not-applicable` で記録します。
 
-## 引き継ぎ確認
-
-次のどちらからでも現在状態と共通ルールへ辿れることを確認します。
-
-1. 公開アプリURL → `/ai-context.json` / `/llms.txt` → ローカルdocs → 親manifest
-2. GitHubリポジトリ → `ai-context.json` / README → ローカルdocs → 親manifest
-
-コードだけが更新され、引き継ぎ情報が古い状態は完了扱いにしません。
+commit成功、deploy成功、HTTP successだけでは完了扱いにしません。目的状態を確認します。
