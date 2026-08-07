@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "name": "app-starter-template",
+  "purpose": "Maintainable starter templates for new applications and AI-assisted continuation work.",
+  "defaultTemplate": "core",
+  "templates": {
+    "core": "templates/core",
+    "cloudflare-worker": "templates/cloudflare-worker",
+    "d1": "templates/d1",
+    "sheets-gas": "templates/sheets-gas"
+  },
+  "rules": {
+    "development": "docs/DEVELOPMENT_RULES.md",
+    "architecture": "docs/ARCHITECTURE_RULES.md",
+    "ui": "docs/UI_RULES.md",
+    "data": "docs/DATA_RULES.md"
+  },
+  "policies": {
+    "splitByResponsibilityFromStart": true,
+    "selfDescribingRepository": true,
+    "githubActionsByDefault": false,
+    "preserveExistingBehavior": true
+  }
+}
