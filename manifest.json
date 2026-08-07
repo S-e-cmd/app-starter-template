@@ -31,7 +31,20 @@
     "completeCheckChangeRegressionRecordPerBatch": true,
     "doNotStopAtCapabilityLimitations": true,
     "continueWithAvailableChecksFixesAndAlternatives": true,
-    "instruction": "When an existing application repository and its public URL are provided with this starter reference, use the non-destructive existing-app protocol. Do not convert the application to the starter directory structure merely for conformance. Preserve working behavior, data contracts, deployment configuration, and public behavior. Work in small safe batches: inspect, change only what is justified, regression-check, record status, then continue. If a tool, permission, or external-service limitation blocks one step, continue all other useful work and give the user only the specific external action that is genuinely required."
+    "requireMaintenanceNeedAssessmentAfterEachBatch": true,
+    "maintenanceNeedLevels": ["high", "medium", "low", "hold"],
+    "maintenanceNeedMustIgnoreTemplateConformance": true,
+    "maintenanceNeedFactors": [
+      "data-loss-or-compatibility-risk",
+      "deployment-or-major-feature-failure-risk",
+      "change-impact-radius",
+      "responsibility-mixing-change-risk",
+      "unverified-critical-integrations-or-storage",
+      "handoff-difficulty"
+    ],
+    "requireUserChoiceAfterEachBatch": true,
+    "batchCompletionChoices": ["continue", "finish-for-now", "prioritize-another-area"],
+    "instruction": "When an existing application repository and its public URL are provided with this starter reference, use the non-destructive existing-app protocol. Do not convert the application to the starter directory structure merely for conformance. Preserve working behavior, data contracts, deployment configuration, and public behavior. Work in small safe batches: inspect, change only what is justified, regression-check, record status, then assess the remaining maintenance need as high, medium, low, or hold using operational risk rather than template differences. At the end of each batch, explain the rating, recommend whether to continue, identify the next safe batch if relevant, and present the user with continue / finish for now / prioritize another area. Do not proceed to another batch until the user chooses to continue or redirects the target. If a tool, permission, or external-service limitation blocks one step, continue all other useful work and give the user only the specific external action that is genuinely required."
   },
   "bootstrap": {
     "required": true,
