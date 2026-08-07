@@ -1,0 +1,9 @@
+@media (max-width: 640px) {
+  .app-shell { padding: 12px; }
+  .app-row { align-items: stretch; }
+  .app-row > button,
+  .app-row > input,
+  .app-row > select { min-height: 44px; }
+  #app-toast-container { right: 12px; bottom: 12px; left: 12px; }
+  .app-toast { max-width: none; }
+}
