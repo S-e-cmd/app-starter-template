@@ -1,9 +1,10 @@
-const DEFAULT_TIMEOUT_MS = 15000;
+import { APP_CONFIG } from '../config/app-config.js';
 
-export async function requestJson(url, options = {}) {
+export async function requestJson(path, options = {}) {
   const controller = new AbortController();
-  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = options.timeoutMs ?? APP_CONFIG.requestTimeoutMs;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const url = path.startsWith('http') ? path : `${APP_CONFIG.apiBaseUrl}${path}`;
 
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
