@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
+  "schemaVersionMeaning": "app-starter-manifest-schema",
   "name": "app-starter-template",
   "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created application repositories, guiding deployment, non-destructive existing-app alignment, post-launch feature changes, high-risk recovery and migration work, and continued maintenance.",
   "defaultTemplate": "core",
@@ -84,6 +85,18 @@
     "toolCapabilityDoesNotEqualUserAuthorization": true,
     "authorizationStates": ["not-authorized", "authorized-for-this-operation", "already-approved-in-current-task"],
     "authorizationFingerprintFields": ["environment", "resource", "operation-type", "target-scope"],
+    "authorizationFingerprintNormalization": {
+      "environment": "Use the exact execution environment or deployment target; production and staging never match implicitly.",
+      "resource": "Use the most specific known canonical resource identity. Do not replace a table, sheet, secret, binding, job, or child resource with its parent database, project, account, or service merely to create a match.",
+      "operation-type": "Use one concrete mutation verb/category. create, update, delete, migrate, import, rewrite, permission-change, schedule-change, bind, unbind, rotate, revoke and switch are not interchangeable unless the user explicitly approved each listed operation.",
+      "target-scope": "Use the exact named fields, columns, routes, records/filter set, settings, jobs, or other affected subset. A filtered record set does not match all records; a column subset does not match the whole table."
+    },
+    "mostSpecificKnownResourceRequired": true,
+    "parentResourceMustNotSubstituteForChildResource": true,
+    "semanticSimilarityDoesNotCreateFingerprintMatch": true,
+    "filteredSetAndSupersetDoNotMatch": true,
+    "multipleApprovedOperationsMustBeRecordedAsExplicitFingerprintList": true,
+    "planOrMigrationLabelAloneDoesNotAuthorizeUnlistedOperations": true,
     "inheritAuthorizationOnlyWhenFingerprintMatches": true,
     "anyFingerprintExpansionRequiresNewAuthorization": true,
     "broadMaintenanceRequestIsNotDestructiveAuthorization": true,
@@ -105,9 +118,11 @@
     "requireImpactAndRecoveryPlanBeforeExecution": true
   },
   "securityContainmentPolicy": {
-    "unknownLeakDoesNotAuthorizeCredentialMutation": true,
-    "readOnlyEvidenceCollectionFirstWhenUnknown": true,
-    "confirmedOrDirectExposureEvidenceRequiredForEmergencyContainmentCandidate": true,
+    "unknownLeakDoesNotAuthorizeAutonomousCredentialMutation": true,
+    "readOnlyEvidenceCollectionFirstForAutonomousDecisionWhenUnknown": true,
+    "confirmedOrDirectExposureEvidenceRequiredForAutonomousEmergencyContainmentCandidate": true,
+    "explicitUserCredentialMutationInstructionDoesNotRequireConfirmedLeakEvidence": true,
+    "explicitUserMutationAuthorizationDoesNotConvertLeakEvidenceToConfirmed": true,
     "toolCapabilityDoesNotGrantContainmentAuthorization": true,
     "explicitContainRevokeDisableInstructionMayAuthorizeOnlyNamedOrClearlyScopedTarget": true,
     "preauthorizedRunbookMayAuthorizeOnlyItsDefinedResourceOperationAndScope": true,
@@ -143,10 +158,13 @@
     "blockedRequiresReasonAlternativeAndResidualRisk": true,
     "blockedOrUnknownDoesNotAutomaticallyStopUnrelatedInScopeWork": true,
     "blockOnlyAffectedDecisionWhenNeededForSuccessSafetyOrAuthorization": true,
+    "dependentWorkMustAlsoHoldWhenItsInputsOrContractDecisionAreBlocked": true,
+    "independentInScopeWorkMayContinue": true,
     "overallStates": ["complete", "work-complete-verification-pending", "incomplete"],
     "components": ["implementation", "deployment", "verification", "documentation"],
     "componentStates": ["complete", "pending", "not-applicable"],
     "commitDeployOrHttpSuccessAloneIsNotFunctionalSuccess": true,
+    "partialVerificationMustNotBeGeneralizedToUnverifiedPurposeState": true,
     "purposeStateMustBeVerified": true
   },
   "buildNumberPolicy": {
@@ -199,6 +217,13 @@
     ],
     "repositoryInternalProjectStatusMayContainMoreDetail": true,
     "doNotCopyRepositoryInternalContextIntoPublicContextWithoutFiltering": true
+  },
+  "schemaMeaningPolicy": {
+    "manifestTopLevelSchemaVersionMeans": "app-starter-manifest-schema",
+    "aiContextTopLevelSchemaVersionMeans": "ai-context-document-schema",
+    "aiContextStarterSchemaVersionMeans": "parent-starter-manifest-schema",
+    "differentSchemaVersionNumbersAcrossTheseFieldsAreNotMismatchByThemselves": true,
+    "compareVersionsOnlyWhenSchemaVersionMeaningMatches": true
   },
   "templateDriftPolicy": {
     "generatedAppMustRecordStarterSchemaVersion": true,
@@ -264,7 +289,7 @@
     "markRecommendedChoice": true,
     "continueChoiceMustNameNextBatch": true,
     "prioritizeAnotherAreaMustExplainWhatUserCanSpecify": true,
-    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. If the user already instructed the AI to continue through the roadmap, finish the stated scope, or process remaining stabilization work, continue through safe in-scope batches without forcing a choice after every batch. Pause only the affected part when scope expands, a new destructive/production mutation needs authorization, a high-risk operation requires specific approval, or the user must choose between materially different directions."
+    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. If the user already instructed the AI to continue through the roadmap, finish the stated scope, or process remaining stabilization work, continue through safe in-scope batches without forcing a choice after every batch. Pause only the affected part and any work that depends on its unresolved contract/input when scope expands, a new destructive/production mutation needs authorization, a high-risk operation requires specific approval, or the user must choose between materially different directions."
   },
   "featureChange": {
     "enabled": true,
