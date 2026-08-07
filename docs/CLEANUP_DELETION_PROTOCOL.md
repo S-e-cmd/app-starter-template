@@ -2,13 +2,16 @@
 
 不要コード、不要ファイル、古い設定、旧API、古いUI等を整理・削除する場合の安全手順です。
 
+Evidence、scope、authorization、contract boundary、verificationの共通定義は `docs/PROTOCOL_ROUTING_RULES.md` を正本とします。このProtocolではcleanup / deletion固有の確認・実施順序だけを定義します。
+
 ## 基本原則
 
 - 「使っていなさそう」を削除理由にしない。
-- 削除は整備の最後に行う。
+- 整備作業の一部としてcleanupする場合は、削除を参照解除・互換確認後の後段に置く。
+- ユーザーが削除そのものをdirect-changeとして明示した場合は、「整備の最後」という理由だけで不必要に延期せず、このProtocolの安全確認を満たした上で実施できる。
 - 参照元・動的参照・外部連携・互換処理を確認してから削除する。
 - 大量削除、一括rename、大規模移動を同じバッチで行わない。
-- 削除前後で機能差分を確認する。
+- 削除前後で、今回のdirect-changeと因果的に関連する機能差分を確認する。
 - Evidence Ruleに従い、未確認を未使用と断定しない。
 
 ## 削除前確認
@@ -41,23 +44,25 @@ repo内部参照がゼロでも、公開API、URL、storage key、exported funct
 
 - 1バッチの削除範囲を限定する。
 - renameと削除を同時に大量実施しない。
-- まず参照を外し、回帰確認後に削除する方法を優先する。
+- まず参照を外し、回帰確認後に削除する方法を優先する。ただし削除自体が明示されたdirect-changeで、参照・互換・external consumerの安全確認が済んでいる場合まで機械的に別バッチへ分けない。
 - migration互換コードはmigration完了条件確認前に削除しない。
 - sourceが存在するgenerated / derived fileは、生成物だけを直接直して整合性を崩さない。
 
 ## 確認
 
-重要項目は `verified / blocked / not-applicable` で扱います。
+重要項目は中央verification policyの `verified / blocked / not-applicable` で扱います。
+
+今回のdirect-changeと削除影響に応じて確認します。
 
 - 初期表示。
-- 対象機能と隣接機能。
+- 対象機能と因果的に関連する隣接機能。
 - 保存・再読み込み。
 - API / route。
 - external consumerへの影響確認。
 - PC/SP表示。
 - 公開環境。
 
-blockedなら理由、代替確認、残存リスクを記録します。
+上記を固定で全項目要求せず、direct-changeのpurpose stateと実際の影響範囲から必要項目を選びます。blockedなら理由、代替確認、残存リスクを記録します。
 
 ## 禁止事項
 
@@ -67,6 +72,7 @@ blockedなら理由、代替確認、残存リスクを記録します。
 - 外部consumer確認不能な公開contractを未使用扱いする。
 - 削除と大規模refactorを同じバッチに混在させる。
 - migration確認前の互換処理削除。
+- 削除がdirect-changeなのに「cleanupは最後」という一般則だけで作業を不必要に停止する。
 
 ## 記録
 
