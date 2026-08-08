@@ -142,7 +142,7 @@
       "production-auth-or-storage-backend-switch",
       "production-permission-role-acl-or-access-control-change",
       "production-cron-trigger-scheduled-job-or-consumer-change",
-      "new-production-resource-that-switches-existing-binding-routing-storage-or-target"
+      "new-production-resource-that-switches-existing-binding-routing_storage-or-target"
     ],
     "irreversibleOrHardToRecoverRequiresOperationSpecificAuthorization": true,
     "requireImpactAndRecoveryPlanBeforeExecution": true
@@ -331,6 +331,14 @@
       "unverified-critical-integrations-or-storage",
       "handoff-difficulty"
     ],
+    "batchDecisionMustAlwaysBeReported": true,
+    "batchDecisionRequiredFields": ["maintenance-need", "scope-completion", "recommended-action", "recommended-reason"],
+    "continueDecisionMustNameConcreteNextBatch": true,
+    "userChoiceIsConditional": true,
+    "autoContinuationRequiresRemainingInScopeWork": true,
+    "autoContinuationEligibleRemainingWork": ["unfinished-direct-change", "unfinished-valid-required-propagation"],
+    "outOfScopeKnownIssuesDoNotJustifyContinuation": true,
+    "confirmedKnownIssueDoesNotEnterCurrentScopeWithoutScopeInclusion": true,
     "batchChoicePolicy": "conditional",
     "mayAutoContinueWhenUserAlreadyAuthorizedContinuation": true,
     "mustPauseForChoiceWhen": [
@@ -345,7 +353,7 @@
     "markRecommendedChoice": true,
     "continueChoiceMustNameNextBatch": true,
     "prioritizeAnotherAreaMustExplainWhatUserCanSpecify": true,
-    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. If the user already instructed the AI to continue through the roadmap, finish the stated scope, or process remaining stabilization work, continue through safe in-scope batches without forcing a choice after every batch. Pause only the affected part and work with a concrete dependency on its unresolved contract/input when scope expands, a new destructive/production mutation needs authorization, a high-risk operation requires specific approval, or the user must choose between materially different directions."
+    "instruction": "Use existing-app alignment when the user's current goal is whole-app stabilization, organization, responsibility cleanup, maintainability improvement, or handoff preparation. Do not select this mode merely because an existing repository and public URL were provided. Report the batch decision after every batch even when no user choice is required. Auto-continue only when unfinished direct-change or valid required-propagation remains inside the current task scope and prior continuation authorization applies. A known issue outside current scope may be recorded but must not justify continuation. Pause only the affected part when scope expands, a new destructive/production mutation needs authorization, a high-risk operation requires specific approval, or the user must choose between materially different directions."
   },
   "featureChange": {
     "enabled": true,
