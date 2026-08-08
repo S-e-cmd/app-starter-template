@@ -51,6 +51,17 @@ Major Change判定はfile数・line数・変更量では行いません。古い
 - out-of-scopeな改善・refactor・cleanupを「ついで」に混ぜない。
 - Major Change Planningを経由しても、方式承認だけで未列挙Production Mutationやdestructive operationをauthorized扱いしない。
 
+## 準備作業から実変更への収束
+
+準備・test・staging・migration helper等をrequired-propagationとして追加する場合は、`DEVELOPMENT_RULES.md` の準備作業収束ruleを適用します。
+
+- 準備が支えるconcrete execution targetを明示する。
+- その準備がtargetの安全な実行、required verification、必要なrollback / recoveryのどれに不可欠かをconfirmed Evidenceで示す。
+- 準備のための追加準備も、最終execution targetまで必要因果を戻して再判定する。
+- required conditionsが満たされたらpreparationは完了とし、direct-change本体が未完了なら次batchは原則executionへ進む。
+- 追加の安心材料、より強い任意test、さらなるcoverageだけでexecutionを延期しない。
+- 新しいconfirmed blockerまたはrequired safety / verification / recovery conditionの変化が出た場合だけpreparationを再開する。
+
 ## Major Change Planningから戻る場合
 
 Planningでcode restructuring / 新機能実装batchが定義された場合、このProtocolへ戻して実装します。
