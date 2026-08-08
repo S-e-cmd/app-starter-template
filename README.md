@@ -6,6 +6,15 @@
 
 判断ruleの正本は `docs/PROTOCOL_ROUTING_RULES.md` です。
 
+starterを使う作業では、READMEだけ、または中央ruleだけを読んで実行・完了報告へ進みません。**作業開始時に、少なくとも次の順で現在taskに必要な文書まで確認します。**
+
+1. `docs/PROTOCOL_ROUTING_RULES.md` — current user intentから主作業モード、scope、Evidence、authorization、continuation、completionを判定する。
+2. 選択した主Protocol — その作業モード固有のrequired outcomeと実施順を確認する。
+3. `docs/DEVELOPMENT_RULES.md` — code変更を行う場合の実装・検証方法を確認する。
+4. `docs/BATCH_COMPLETION_CHOICES.md` — batch終了時のユーザー向け報告と、continue / finish / user decision時のinteractionを確認する。
+
+**既存アプリ全体の整理・安定化・引き継ぎ改善では、`PROTOCOL_ROUTING_RULES.md` → `EXISTING_APP_ALIGNMENT_PROTOCOL.md` → 必要に応じ `DEVELOPMENT_RULES.md` → `BATCH_COMPLETION_CHOICES.md` までを初回batchから適用します。** handoff文書の追加・更新だけでcurrent task全体を完了扱いにせず、Existing App Alignmentのrequired outcomeとbatch completion手順まで確認してから終了判断します。
+
 作業開始時は、まずユーザーの現在目的から主作業モードを決め、scope / Evidence / authorization / Production Mutation / continuation / completionを中央ruleで判定します。
 
 Repository URL、公開URL、starter参照があること自体は作業モードの選択理由にしません。
