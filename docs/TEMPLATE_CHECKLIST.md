@@ -17,6 +17,23 @@
 - silent fallbackを追加・使用していない。
 - mismatch / blocked / unknownがscopeに無関係なら他のin-scope作業を不必要に停止していない。
 
+## preparation convergence
+
+準備・test・staging・補助script等をrequired-propagationとして扱う場合:
+
+- concrete execution targetを特定した。
+- remaining required preparationが、targetの安全な実行 / required verification / 必要なrollback・recoveryのどれに必要かを明確にした。
+- required preparationの必要性をconfirmed Evidenceで確認した。
+- 「さらに強いtest」「coverage増加」「追加の安全余裕」「将来debugしやすい」だけをrequired preparationにしていない。
+- Preparation Aがrequiredでも、それを支えるPreparation Bを自動的にrequiredへ昇格していない。
+- Preparation Bについても、最終的なconcrete execution targetの安全な実行 / required verification / required recoveryへ必要因果が戻るか再判定した。
+- required precondition / verification / rollback・recovery条件が満たされたらpreparation completeとして収束させた。
+- execution-readyをoverall completion stateや新しいmachine-readable enumとして扱っていない。
+- execution-readyでdirect-change本体がunfinishedなら、next batchを原則execution target本体にした。
+- ready後にpreparation-only batchへ戻る場合、新しいconfirmed Evidenceによるexecution failure / verification invalidation / rollback・recovery failure / contract・data safety failure / required condition changeを確認した。
+- 新しいblocking Evidenceなしで「もっと安全にできる」だけを理由にexecutionを延期していない。
+- Data Migration / Environment Change / Major Change等では各Protocol固有のrequired safety conditionsを省略せず、固定batch数ではなくrequired conditionsの充足で収束判定した。
+
 ## authorization fingerprint
 
 `already-approved-in-current-task` を使う場合:
@@ -119,6 +136,8 @@
 - scope complete後の追加inspectionをoptional future workとして分離した。
 - current scope外のknown issue / bug / recommended improvement / unrelated issueをcontinuation justificationへ使っていない。
 - known issueがconfirmedでも、それだけでcurrent task scopeへ昇格させていない。
+- preparationがexecution-readyなのに、新しいconfirmed blockerなしでpreparation-only next batchを追加していない。
+- preparation chainの各項目を最終execution targetまで必要因果を戻して判定した。
 - Major Change Planningが必要とconfirmedされた場合、整備の延長として大規模実装へ直行していない。
 - Major Change候補の必要性確認がscope外なら、それ自体を新しいexploratory continuation理由にしていない。
 - `app-starter-template` に準じた整備時、各アプリのhandoffへparent starterのMajor Change Planning入口を残した。
@@ -253,6 +272,7 @@ hold伝播が必要なのは、後続作業がblocked inputを直接使用する
 - 同じruleを確認するだけのcaseを無制限に追加していない。
 - 重大な抜け道がなければ、rule追加より重複整理・実app適用・過剰停止確認を優先した。
 - Major Change Planningを「変更が大きそう」という曖昧な理由で常用し、新しい過剰停止gateにしていない。
+- preparation convergenceのためだけに新しいoverall state / manifest field / Protocolを増やしていない。
 
 ## 解釈一致テスト
 
@@ -272,6 +292,7 @@ hold伝播が必要なのは、後続作業がblocked inputを直接使用する
 - independent resource creation riskと既承認Creation Flow。
 - schema version drift。
 - silent fallback / fake success / partial verification。
+- preparationの収束と正当な再開。
 - Major Changeの過剰昇格 / 過小判定。
 - Major Change Planningとauthorization / completion / cleanupの境界。
 
