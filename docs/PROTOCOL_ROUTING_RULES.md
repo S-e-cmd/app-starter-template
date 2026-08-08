@@ -13,6 +13,39 @@ Repository URL、公開URL、starter参照の存在ではなく、ユーザー�
 - 既存アプリ全体の整理・安定化・引き継ぎ改善 → `EXISTING_APP_ALIGNMENT_PROTOCOL.md`
 - 正常稼働していたアプリや主要機能の障害 → `INCIDENT_RECOVERY_PROTOCOL.md`
 
+通常のFeature Change / Existing App Alignmentでrequired outcomeを安全に達成できず、architecture / contract / transition設計が必要だとconfirmedできた場合は、実装へ直行せず `MAJOR_CHANGE_PLANNING.md` をplanning / routing gateとして挟みます。
+
+### Major Change Planning gate
+
+Major Changeは変更量ではなく、**contract / architecture / transition impact**で判定します。
+
+原則として、通常の局所的・段階的変更だけではrequired outcomeを安全に達成できないことをconfirmed Evidenceで確認した場合に `major-change-planning-required` とします。
+
+候補例:
+
+- 局所修正ではrequired outcomeを満たせない。
+- 現在architecture上の制約が目的達成を直接妨げている。
+- API / storage / UI / deployment等のcontract変更が不可避。
+- 旧実装との互換維持にmigration / transition設計が必要。
+- 複数moduleをまたぐ変更を一体として扱わなければ整合性を保てない。
+
+次だけではMajor Changeへ昇格しません。
+
+- file / line / 変更量が多い。
+- UIとAPIの両方を触る。
+- 古い構成、modern化可能、templateと違う。
+- 分割・全面整理すると綺麗になる。
+
+Evidenceがinferred / unknownならMajor Change Requiredとは確定しません。必要性判断の確認自体がcurrent scopeに含まれる場合だけread-only確認し、confirmed後にPlanningへ移します。
+
+**possible major change ≠ major change required**
+
+**Major Change Planning Required ≠ rewrite authorized**
+
+Planningは方式・影響・migration・rollback・実装batchとrouting先を整理するところまでです。実operationはFeature Change / Data Migration / Environment Change / Cleanup / Incident Recovery / Dependency Update等へroutingし、各ProtocolのEvidence・authorization・verificationをそのまま適用します。
+
+`major-change-planning-required` はrouting / planning状態であり、`complete / work-complete-verification-pending / incomplete` のoverall completion stateへ混ぜません。
+
 ## 2. scopeを3区分する
 
 - **direct-change** — ユーザーが具体的に変更を求めた機能、挙動、UI、data処理、設定。
@@ -81,7 +114,7 @@ Evidence stateはscope、authorization、rollback、security containmentへ引�
 - library / SDK / runtime / build基盤更新 → Dependency Update。
 - credentialや非公開data露出のconfirmedまたは直接露出を示す強いEvidence → security containmentを優先評価。
 
-切替は該当部分へ適用し、元の作業目的を失いません。
+切替は該当部分へ適用し、元の作業目的を失いません。Major Change Planningを経由した場合も、Planningがこれらの安全条件を上書きしません。
 
 ## 7. 複数高リスク条件
 
@@ -211,6 +244,8 @@ filtered subsetとall records、subsetとsupersetは別scopeです。
 - 未変更fingerprintを毎operation再確認する必要はない。
 - 「migrationに必要な操作全部」「このplan一式」だけで、未列挙operationまで承認済みとみなさない。
 
+Major Change Planningで方式を承認しても、このruleを使わず未列挙operationへauthorizationを広げません。Planning段階でfingerprint集合まで具体化され承認されたoperationだけ、既存plan authorizationとして扱えます。
+
 ## 11. security containmentとauthorization
 
 Evidenceは**AIが自律的にcontainmentを選ぶ根拠**、authorizationは**production mutationを実行してよいか**の判定であり、別軸です。
@@ -298,6 +333,8 @@ HTTP 200、commit成功、deploy成功、API応答、画面表示だけではfun
 - 「端末間同期を直す」→ 保存だけ成功しても不十分。別端末同期の目的状態まで必要。
 
 隣接回帰確認は因果的に関係する範囲だけ追加し、無関係な機能を完了条件へ増やして過剰停止しません。
+
+Major Change PlanningではPlanning complete / Implementation complete / Cleanup completeを分離し、Planning completeだけでMajor Change全体をcompleteにしません。新系がverifiedでも旧系削除authorizationやcleanup completionを意味しません。
 
 ## 20. environment情報源
 
@@ -396,6 +433,8 @@ hold伝播の根拠:
 - **work-complete-verification-pending** — 変更完了、required outcomeの必要検証の一部blocked。
 - **incomplete** — 実装・復旧・migration・setting変更自体に残作業。
 
+`major-change-planning-required` はこの全体stateとは別のrouting / planning状態です。
+
 複数outcomeがある場合、outcome単位のverified / blocked / pendingを保持し、1つの成功を依頼全体へ一般化しません。
 
 必要に応じimplementation / deployment / verification / documentationも個別管理します。
@@ -409,6 +448,8 @@ hold伝播の根拠:
 - manifestへ自然言語Protocolを詰め込みすぎない。
 - adversarial casesは境界を代表するものを残し、同じruleを確認するだけの重複caseを無制限に増やさない。
 - 大きな抜け道がなく、別AIでも主要分類が一致する段階ではrule追加フェーズを終了し、重複整理・実アプリ適用・過剰停止確認へ移る。
+
+Major Change Planningも、通常変更では安全に目的達成できないconfirmed境界にだけ使用し、新しい過剰停止gateにしません。
 
 ## 27. 解釈一致テスト
 
@@ -426,5 +467,8 @@ hold伝播の根拠:
 - 複数direct-change outcomeの一部成功を全体成功にできないか。
 - independent resource createのquota / credential / billing / audit riskを見落とせないか、逆に承認済みCreation Flowを毎resource再確認して過剰停止できないか。
 - schemaVersionの異なる意味やversion driftをschema mismatchと混同できないか。
+- 変更量だけでMajor Changeへ過剰昇格できないか、逆に小さな差分でもbreaking contract / backend / auth切替のtransition impactを見落とせないか。
+- Major Change Planning Requiredをrewrite authorizationへ拡張できないか。
+- Planning completeを全体complete、new system verifiedをold system deletion authorizedへ誤拡張できないか。
 
 別AIでscope / Evidence / Production Mutation / authorization / continuation / completion / Protocolの結論が合理的に割れるcaseは、rule不足または表現曖昧のEvidenceとして扱います。
