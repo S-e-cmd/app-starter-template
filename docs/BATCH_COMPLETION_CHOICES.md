@@ -63,6 +63,32 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 
 対象をユーザーが指定していない場合、AIが勝手に別の整備対象を選びません。
 
+## ユーザー判断で停止する場合
+
+中央rule上、新しいuser choice / operation-specific authorizationが必要なため自動実行を止める場合は、**作業報告だけで終えず、ユーザーが次に何を選べばよいかまで提示します。**
+
+最低限、次を示します。
+
+- 何が未実行なのか。
+- なぜAIが自動実行しなかったのか。
+- 現実的な選択肢。
+- 推奨案とその理由。
+
+例えば、変更をDraft PRへ隔離し、mergeするとproduction自動deployが走る場合:
+
+```text
+未実行: PR #3 の main へのmergeと本番反映
+停止理由: mergeによりproduction deploymentが発生するため、既存authorizationだけでは自動実行しない
+
+[PR #3をマージして本番反映] ← 推奨 — Preview / required verificationが完了しており、本番反映へ進む
+[Draftのまま保留] — productionは現状維持
+[追加確認してから判断] — Preview等を追加確認してから選ぶ
+```
+
+このとき「merge候補として妥当」「本番は変わっていない」等の状態説明だけで終えません。停止理由がuser decisionであるなら、**decision handoffまでがそのbatchの報告責務**です。
+
+選択肢は常に3つ作る必要はありません。実際に成立する選択肢だけを示し、推奨案がある場合は `← 推奨` を付けます。
+
 ## ユーザー選択を求める場合
 
 中央rule上、次のようなuser choice / authorizationが必要なときだけ選択を求めます。
@@ -91,4 +117,5 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 - `finish-for-now` の根拠を「直前batchがcomplete」だけにする。
 - maintenance needの高さだけで `continue` を表示する。
 - optional / exploratory workをrequired workのように表示する。
+- user decisionが必要で停止したのに、未実行operation / 停止理由 / 選択肢 / 推奨を示さず状態説明だけで終える。
 - labelだけを並べ、各選択肢の意味を説明しない。
