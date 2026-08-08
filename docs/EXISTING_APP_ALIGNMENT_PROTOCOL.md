@@ -38,6 +38,7 @@
 - 「改善できる」「関連している」「同じfileにある」「fileが長い」はrequired-propagationの理由にしない。
 - 整備候補を発見しても、現在scope外なら `PROJECT_STATUS.md` に記録するだけにする。
 - Evidenceがない「未使用」「原因」「不要」「安全」等の断定を行わない。
+- 既知issueであることはcurrent task scopeに含まれることを意味しない。
 
 ## 高リスク条件への切替
 
@@ -79,7 +80,7 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 3. 現在の構成、data contract、UI制約、現在状態を文書化する。
 4. 直接変更またはrequired-propagationに含まれる責務混在だけ安全に整理する。
 5. 今後の候補は記録し、scopeを勝手に広げない。
-6. 不要code削除は `CLEANUP_DELETION_PROTOCOL.md` に従い最後に行う。
+6. 不要code削除は `CLEANUP_DELETION_PROTOCOL.md` に従い安全確認後に行う。
 
 ## 1バッチの標準手順
 
@@ -90,7 +91,10 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 5. 重要確認項目を `verified / blocked / not-applicable` で記録する。
 6. `docs/PROJECT_STATUS.md` に今回の変更、確認済み範囲、blocked項目、残タスク、意図的な例外を記録する。
 7. 現在の整備必要度を評価する。
-8. 継続条件に従って次バッチへ進むか、選択肢を提示する。
+8. 今回scopeの完了状態を判定する。
+9. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
+10. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
+11. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
 
 不具合修正と無関係な大規模refactorは同じバッチへ混在させません。
 
@@ -105,17 +109,46 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 
 未確認を異常扱いしません。
 
+## バッチ終了時のdecision reporting
+
+**ユーザー選択を要求するかどうかに関係なく、各batch終了時の判断提示は必須です。**
+
+最低限、次をユーザーへ明示します。
+
+- 現在の整備必要度: `high / medium / low / hold`。
+- 今回scopeの完了状態: `complete / work-complete-verification-pending / incomplete`。
+- 推奨判断: `continue / finish-for-now / prioritize-another-area`。
+- 推奨理由。
+- `continue` の場合のみ、次に扱う具体的batch。
+
+「毎batchユーザー選択を要求しない」ことは、「判断結果を報告しなくてよい」ことを意味しません。自動継続する場合も、現在状態と次batchをユーザーへ見える形で報告します。
+
 ## バッチ継続の扱い
 
 **毎バッチ必ずユーザー選択を要求しません。**
 
-ユーザーが現在の依頼で、例えば次を明示している場合は、当初scope内の安全な次バッチへ自動継続できます。
+自動継続できるのは、現在task scope内に次の未完了作業が残る場合だけです。
+
+- 未完了の `direct-change`。
+- 中央Evidence条件を満たし、現在scopeへ属する未完了の `required-propagation`。
+
+ユーザーが現在の依頼で、例えば次を明示している場合は、上記条件を満たす安全な次batchへ自動継続できます。
 
 - 「完了まで進めて」。
 - 「ロードマップ通り進めて」。
 - 「残課題を順に処理して」。
 - 「安定化を可能な範囲まで進めて」。
 - 同等の継続指示。
+
+次は自動継続理由になりません。
+
+- current scope外の既知bug / known issue。
+- recommended improvement。
+- unrelated issue。
+- 任意refactor / cleanup候補。
+- 将来改善候補。
+
+既知issueはEvidenceとしてconfirmedでも、current task scopeへ自動昇格しません。必要なら `PROJECT_STATUS.md` に記録し、別task候補として提示します。ユーザーが明示的にcurrent scopeへ追加した時点で初めて継続対象になります。
 
 次の場合は停止して選択または個別許可を求めます。
 
