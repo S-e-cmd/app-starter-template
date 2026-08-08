@@ -16,6 +16,36 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 
 整備必要度は4値から1つだけ選びます。`low-medium` 等の中間値は使いません。
 
+### ユーザー向け報告は結果を優先する
+
+上記のstate / rule用語は**内部判断のための共通語**です。ユーザー向け報告では、必要がない限り `Evidence`、`current task`、`work-complete-verification-pending`、`continuation eligibility` 等を前面に出しません。
+
+通常の報告は、次の順で簡潔にまとめます。
+
+1. 何を変更・整理したか。
+2. 何を確認できたか。
+3. 未確認・blockedがある場合は、その対象と影響。
+4. 次にどうするか。終了ならその旨、継続なら実行した次batchの結果。
+5. build番号、commit、PR等の必要な識別情報。
+
+starter ruleへ従ったこと自体を成果として長く説明しません。rule名やstate名を列挙して「正しく判断した」ことを弁明するのではなく、**ユーザーが作業結果と次の行動をすぐ理解できる文章**にします。
+
+内部stateを明示するのは、次のいずれかの場合に限定します。
+
+- ユーザーがstate / rule判定そのものを確認している。
+- blocked / hold等を正確に区別しないと次の判断を誤る。
+- 複数batch / outcomeの進捗比較に必要。
+
+例えば `work-complete-verification-pending` と内部判定しても、通常報告では次のように書けます。
+
+```text
+build/cache bustingの整理は完了しました。
+公開ページの確認だけ、外部アクセス障害のため未確認です。コード上の変更と回帰確認は完了しているため、今回はここで終了で問題ありません。
+Commit: abcdef...
+```
+
+「starterを確認しました」「rule上は〜」「Evidenceでは〜」等の説明は、ユーザーが求めていない限り繰り返しません。
+
 ### 次候補を出しただけではbatch decisionは完了しない
 
 「次の優先候補」「次に見るとよい箇所」「別batchに分けるのが安全」等の候補を提示した場合でも、**その候補がcurrent task scope内の具体的なunfinished workとしてcontinuation eligibilityを満たすかを中央ruleで判定し、必ず `continue / finish-for-now / prioritize-another-area` のいずれかへ着地させます。**
@@ -163,6 +193,8 @@ continuation eligibilityが成立しているなら、この報告に続けて�
 ## 禁止
 
 - batch decision reportingを省略する。
+- ユーザー向け報告をstarter rule名・state名・自己弁明中心にする。
+- 作業結果より先に、ruleへ従った経緯や判断過程を長く説明する。
 - 次候補を提示しただけで、`continue / finish-for-now / prioritize-another-area` の判定を省略する。
 - 次候補がrequired workかoptional candidateかを曖昧にしたまま停止する。
 - `continue` なのに具体的next batchを示さない。
