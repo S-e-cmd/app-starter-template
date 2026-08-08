@@ -12,6 +12,8 @@
 - 推奨理由。
 - `continue` の場合のみ、次に扱う具体的batch。
 
+整備必要度は定義済みの `high / medium / low / hold` から**必ず1つだけ選びます**。`low-medium`、`低〜中`、`medium寄りのlow` 等の中間表現は使用しません。境界に迷う場合も、現在確認できているriskを基準に最も妥当な1値を選び、必要なら理由で補足します。
+
 「毎batchユーザー選択を要求しない」ことは、「batch終了時の判断提示を省略してよい」ことを意味しません。自動継続する場合も、現在状態と次batchを報告します。
 
 ## maintenance needとcontinuationは別判定
@@ -112,6 +114,7 @@ current task scope内に具体的な未完了direct-changeまたはvalid require
 ## 禁止
 
 - batch終了時のmaintenance need / scope completion / recommended action / reasonを省略する。
+- maintenance needを `low-medium`、`低〜中` 等の中間表現で報告する。
 - `continue` 推奨なのに具体的next batchを示さない。
 - 既に継続許可があることを理由にdecision reportingまで省略する。
 - maintenance needがmedium / highであることだけをcontinuation justificationに使う。
