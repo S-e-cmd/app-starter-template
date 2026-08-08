@@ -75,6 +75,29 @@ exploratory inspection自体は禁止しません。次の場合はcurrent scope
 
 ユーザーが現在の依頼で「完了まで進める」「ロードマップ通り継続」「残課題を順に処理」等を既に明示している場合も、上記条件を満たす当初scope内の安全な次batchへ進むためにだけchoiceを省略できます。
 
+## preparation-only batchの収束
+
+準備作業を `required-propagation` として継続する場合は `DEVELOPMENT_RULES.md` の準備作業収束ruleを適用します。
+
+batch decisionでは、必要に応じて次を短く明示します。
+
+- concrete execution target。
+- remaining required preparation。
+- execution-ready: `yes / no`。これはoverall completion stateや新しいenumではなく、次のexecution targetへ進むための局所判断です。
+- `no` の場合は、何が安全な実行 / required verification / required rollback・recoveryを妨げるかという具体的blocking Evidence。
+
+`execution-ready = yes` かつdirect-change本体がunfinishedなら、`continue` 自体は正しいですが、**concrete next batchは原則execution target本体**にします。
+
+この状態で別のpreparation-only batchをnext batchにする場合は、新しくconfirmedされた次のいずれかを理由として明示する必要があります。
+
+- execution failureを生む具体的blocker。
+- verification invalidation。
+- rollback / recovery failure。
+- contract / data safety failure。
+- required safety / verification / recovery conditionの変化。
+
+「より強いtestを追加できる」「semantic coverageを増やせる」「さらに安全余裕を増やせる」「準備Aをより安全にする準備Bがある」だけではpreparationを再開・継続しません。Preparation Bも最終的なconcrete execution targetへ必要因果が戻る場合だけrequired-propagationにできます。
+
 ## ユーザー選択が必要な条件
 
 - 当初scopeを超える。
@@ -117,6 +140,8 @@ current task scope内に具体的な未完了direct-changeまたはvalid require
 
 現在scopeがcompleteで、残りがknown issue / recommended improvement / exploratory inspection / optional refactor等だけなら、AIが勝手にそれを次batchへ選びません。
 
+準備が収束済みでdirect-change本体がunfinishedなら、次batchには準備の追加ではなくexecution target本体を示します。新しいconfirmed blockerがないのにpreparation-only workを連続next batch化しません。
+
 ### 別の箇所を優先
 
 現在の自動候補ではなく、ユーザーが指定した箇所を次batch対象に切り替えます。表示時には `気になる機能・UI・保存・公開周りなどを指定` のように、何を指定すればよいか分かる説明を添えます。
@@ -136,6 +161,8 @@ current task scope内に具体的な未完了direct-changeまたはvalid require
 - continuation eligibilityを判定する前に「安全に実行できるから」を理由としてnext batch化する。
 - 「もっと調べる価値がある」だけで `continue` を推奨する。
 - 補助script・検査toolを便利さだけでcurrent scopeへ自動追加する。
+- execution-readyなのに、新しいblocking Evidenceなしで追加test / coverage / stagingだけのpreparation-only batchを継続する。
+- required preparation Aに役立つという理由だけでPreparation Bをrequired-propagationへ自動昇格する。
 - `[続ける]` などlabelだけを並べ、何が起きるか説明しない。
 - 推奨理由を示さずに選択を求める。
 - `別の箇所を優先` をAI側の別候補選択として扱う。
