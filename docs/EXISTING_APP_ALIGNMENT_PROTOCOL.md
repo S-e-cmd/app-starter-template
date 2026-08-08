@@ -75,6 +75,19 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 
 文書と実装・実稼働が食い違う場合は、推測でどちらかを正として変更せず「不一致」として扱います。
 
+## README / docs の鮮度とscope
+
+READMEや既存docsが古いこと自体は、常にcurrent scopeの必須修正を意味しません。まず内容を次のどちらかへ分類します。
+
+- **required documentation fix** — 現在の構成、公開方式、保存方式、API契約、主要責務、必須handoff情報などを誤って説明し、次の作業者がcurrent stateを誤認する内容。
+- **optional documentation note** — 過去の計画、古い「次段階」メモ、将来候補、補足リンク等で、current stateの理解や今回scopeの成功判定を妨げない内容。
+
+required documentation fixは、今回の引き継ぎ・保守情報整備scopeに含まれるならdocumentation direct-changeとして修正します。optional documentation noteは、それだけを理由にscopeを広げたり `continue` を推奨したりせず、必要ならfuture workとして記録します。
+
+READMEへの入口追加なども同じ基準で扱います。すでに `ai-context.json` や `docs/*` から必要な情報へ十分到達でき、README追加が利便性向上に留まるならoptionalです。一方、READMEの現行説明がcurrent stateを誤認させる場合はrequired fixです。
+
+required documentation writeがtool / permission / safety gate等でblockedになった場合、変更そのものが未完了なのでscopeを `complete` としません。これはverificationだけがblockedした状態ではないため、`work-complete-verification-pending` にも分類しません。affected outcomeは `incomplete` とし、blocked理由と残作業を記録します。
+
 ## 整備の優先順位
 
 1. 現状確認と保護対象の明確化。
@@ -216,7 +229,7 @@ exploratory inspection自体は禁止しません。次のいずれかでcurrent
 
 - **完了** — 整備変更と必要検証が完了。
 - **作業完了 / 検証保留** — 変更は完了したが必要検証の一部がblocked。
-- **未完了** — 整備作業そのものに残作業がある。
+- **未完了** — 整備作業そのものに残作業がある。required documentation writeのblockedもここに含む。
 
 必要に応じて implementation / deployment / verification / documentation を `complete / pending / not-applicable` で記録します。
 
