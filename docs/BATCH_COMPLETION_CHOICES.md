@@ -99,6 +99,22 @@ current task: incomplete
 
 continuation eligibilityが成立しているなら、この報告に続けて○○の実作業へ着手します。
 
+### 実行可能なrequired verificationを残して終了しない
+
+コード変更・設定変更・生成物更新等のworkが終わっていても、**その変更のrequired verificationが現在のtool / environmentで実行可能なら、未実施のまま `work-complete-verification-pending` や `finish-for-now` にしません。**
+
+例:
+
+- repository内で実行できる `npm test` / `npm run build` / lint / typecheck。
+- 変更したmoduleを対象にした既存contract test。
+- 現在利用可能なPreview / local runtimeでの必須確認。
+
+これらは「次にやる確認候補」ではなく、current batchのrequired verificationとして先に実行します。
+
+`work-complete-verification-pending` にできるのは、中央ruleどおり、required verificationが実際にblockedな場合です。例えば外部runtimeへ接続できない、必要credentialがない、対象environmentが利用不能等です。
+
+一部verificationだけblockedでも、独立して実行可能なrequired verificationは先に完了させます。**「実ブラウザ確認ができない」ことを理由に、同時に実行可能なbuild / testまで残して停止しません。**
+
 ## finish-for-now
 
 中央ruleでcurrent task scope内のrequired workが尽き、残りがoptional improvement / exploratory work / separate taskだけの場合に使用します。
@@ -200,6 +216,8 @@ continuation eligibilityが成立しているなら、この報告に続けて�
 - `continue` なのに具体的next batchを示さない。
 - continuation可能なのに、同じ判断説明だけを繰り返して実作業へ進まない。
 - 前回の不適切な停止を自己訂正しただけで、continuation eligibilityが成立しているのに再び停止する。
+- 実行可能なrequired test / build / verificationを残したまま、`work-complete-verification-pending` や `finish-for-now` として停止する。
+- blockedなverificationが1つあることを理由に、独立して実行可能なrequired verificationまで未実施のまま残す。
 - `finish-for-now` の根拠を「直前batchがcomplete」だけにする。
 - maintenance needの高さだけで `continue` を表示する。
 - optional / exploratory workをrequired workのように表示する。
