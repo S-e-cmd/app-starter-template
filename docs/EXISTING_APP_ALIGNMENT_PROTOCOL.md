@@ -136,10 +136,11 @@ required documentation writeがtool / permission / safety gate等でblockedに�
 8. 今回scopeの完了状態を判定する。
 9. continuation eligibilityを、maintenance needとexecution safetyから独立して先に判定する。
 10. continuation eligibilityが成立したworkについて、安全なexecution方法を選ぶ。
-11. Major Change Planning gateが必要かを中央ruleで判定する。判定だけで実装authorizationへ進めない。
-12. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
-13. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
-14. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
+11. 準備作業がある場合は `DEVELOPMENT_RULES.md` の収束ruleでconcrete execution target / remaining required preparation / execution-readyを確認する。
+12. Major Change Planning gateが必要かを中央ruleで判定する。判定だけで実装authorizationへ進めない。
+13. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
+14. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
+15. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
 
 不具合修正と無関係な大規模refactorは同じバッチへ混在させません。
 
@@ -231,6 +232,16 @@ exploratory inspection自体は禁止しません。次のいずれかでcurrent
 既知issueはEvidenceとしてconfirmedでも、current task scopeへ自動昇格しません。必要なら `PROJECT_STATUS.md` に記録し、別task候補として提示します。ユーザーが明示的にcurrent scopeへ追加した時点で初めて継続対象になります。
 
 補助script・検査toolの新設も同じscope ruleに従います。「今後便利」「保守性が上がる」「確認に役立つ」だけでは自動追加しません。current direct-changeに不可欠ならEvidence付きrequired-propagationとして扱い、それ以外はoptional future workです。
+
+### preparation-only継続の収束
+
+準備・test・staging・補助script等がcurrent direct-changeを支えるrequired-propagationである場合でも、それ自体を独立した継続目的にしません。`DEVELOPMENT_RULES.md` の共通ruleに従い、最終的なconcrete execution targetまで必要因果を確認します。
+
+concrete execution targetの安全な実行、required verification、必要なrollback / recovery条件が満たされたらpreparationは収束済みです。direct-change本体がunfinishedなら、次batchは原則そのexecution targetへ進みます。
+
+新しいpreparation-only batchへ戻れるのは、新しいconfirmed Evidenceでexecution failure / verification invalidation / rollback・recovery failure / contract・data safety failure、またはrequired conditionの変化が確認された場合です。
+
+追加の安心材料、より強い任意test、coverage増加、Preparation Aをさらに検査するPreparation Bの有用性だけでは継続しません。Bも最終execution targetへ必要因果が戻る場合だけrequired-propagationにできます。
 
 次の場合は停止して選択または個別許可を求めます。
 
