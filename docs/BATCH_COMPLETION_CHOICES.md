@@ -74,6 +74,24 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 - 現実的な選択肢。
 - 推奨案とその理由。
 
+### 選択肢は同じdecision levelに揃える
+
+選択肢は、**現在の停止理由を解消するための同一decision point**に揃えます。
+
+例えば停止理由が「Draft PRをmainへmergeしてproductionへ反映してよいか」なら、選択肢はそのmerge / production反映判断に限定します。
+
+- mergeして本番反映する。
+- Draftのまま保留する。
+- 必要な追加確認を行ってからmerge可否を判断する。
+
+この段階で、次のような**一段先・別軸の判断**を同じ選択肢へ混ぜません。
+
+- 今回の整備task自体を終了するか。
+- 別の責務へ進むか。
+- 別の箇所を優先するか。
+
+現在のdecision pointが解消して本番反映・必要検証まで終わった後に、中央ruleで改めてbatch completion / current task completion / continuationを判定し、その次のinteractionを提示します。
+
 例えば、変更をDraft PRへ隔離し、mergeするとproduction自動deployが走る場合:
 
 ```text
@@ -82,7 +100,7 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 
 [PR #3をマージして本番反映] ← 推奨 — Preview / required verificationが完了しており、本番反映へ進む
 [Draftのまま保留] — productionは現状維持
-[追加確認してから判断] — Preview等を追加確認してから選ぶ
+[追加確認してから判断] — Preview等を追加確認してからmerge可否を決める
 ```
 
 このとき「merge候補として妥当」「本番は変わっていない」等の状態説明だけで終えません。停止理由がuser decisionであるなら、**decision handoffまでがそのbatchの報告責務**です。
@@ -118,4 +136,5 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 - maintenance needの高さだけで `continue` を表示する。
 - optional / exploratory workをrequired workのように表示する。
 - user decisionが必要で停止したのに、未実行operation / 停止理由 / 選択肢 / 推奨を示さず状態説明だけで終える。
+- 現在の停止理由がmerge可否なのに、「今回終了」「別責務へ進む」等の一段先・別軸の判断を同じ選択肢へ混ぜる。
 - labelだけを並べ、各選択肢の意味を説明しない。
