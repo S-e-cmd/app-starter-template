@@ -487,6 +487,10 @@ Major Change Planningも、通常変更では安全に目的達成できないco
 4. ユーザーの既存continuation authorizationが次batchへ適用できる。
 5. 新しいuser choice / operation-specific authorizationが不要である。
 
+**上記5条件が成立して `continue` と判定した場合、それは説明用の推奨labelではなく、次batchへの実行遷移です。** 現在のtask / turnで利用可能なtoolと情報により実行可能なら、decisionを報告したうえでそのまま具体的next batchへ着手し、`「進めるべき状態です」`、`「次は○○です」`、`「continueを推奨します」` 等の説明だけでturnを終了しません。
+
+停止できるのは、次batchへ進むために新しいuser choice / operation-specific authorizationが必要、必要inputがblocked、利用可能toolでは実行不能、または新しいconfirmed blockerによってcontinuation eligibilityが崩れた場合です。その場合は停止理由と必要なdecision / inputを具体的にhandoffします。
+
 `read-only`、`限定確認`、`安全な範囲`、`confirmedなものだけ変更` 等はexecution safetyであり、scope inclusionやcontinuation eligibilityを作りません。
 
 次だけでは継続理由にしません。
