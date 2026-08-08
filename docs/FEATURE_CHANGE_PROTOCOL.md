@@ -17,6 +17,8 @@
 
 新規アプリの初期作成は `BOOTSTRAP_PROTOCOL.md`、既存アプリ全体の整理・安定化・引き継ぎ改善が主目的なら `EXISTING_APP_ALIGNMENT_PROTOCOL.md` を使用します。既存Repoや公開URLが提示されていること自体は整備モードへの切替理由にしません。
 
+通常の局所的・段階的変更ではrequired outcomeを安全に達成できないことがconfirmedされた場合は、このProtocolのまま大規模実装へ直行せず、`MAJOR_CHANGE_PLANNING.md` をplanning / routing gateとして適用します。
+
 ## 変更前
 
 1. ユーザー要望と完了条件を確認する。
@@ -27,8 +29,11 @@
 6. 保存先、API、外部service、公開方式、PC / SP UIへの影響を確認する。
 7. `ai-context.json` と関連docsを確認する。
 8. 高リスクProtocol切替やProduction Mutation authorizationが必要か中央ruleで判定する。
+9. 局所変更ではrequired outcomeを安全に達成できないconfirmed Evidenceがあるか確認し、該当する場合だけMajor Change Planningへ切り替える。
 
 変更対象と隣接範囲が把握できたら、無関係な全体再確認は行いません。
+
+Major Change判定はfile数・line数・変更量では行いません。古い構成、巨大file、UI/API両方を触ること、modern化可能であることだけではPlanningへ移しません。Evidenceがinferred / unknownなら `possible major change` に留めます。
 
 ## 実装方針
 
@@ -44,6 +49,16 @@
 - environment変更が必要なら `ENVIRONMENT_CHANGE_PROTOCOL.md` を適用する。
 - cleanup / dependency updateが必要なら該当Protocolを適用する。
 - out-of-scopeな改善・refactor・cleanupを「ついで」に混ぜない。
+- Major Change Planningを経由しても、方式承認だけで未列挙Production Mutationやdestructive operationをauthorized扱いしない。
+
+## Major Change Planningから戻る場合
+
+Planningでcode restructuring / 新機能実装batchが定義された場合、このProtocolへ戻して実装します。
+
+- Planningで定義されたrequired outcome・保護対象・batch依存関係を引き継ぐ。
+- Planningの方式承認をscope無制限拡張やrewrite authorizationにしない。
+- Data Migration / Environment Change / Cleanup等が別batchなら、それぞれ該当Protocolへroutingする。
+- Planning completeをImplementation completeとして扱わない。
 
 ## 検証中に別問題を発見した場合
 
@@ -95,3 +110,5 @@ build番号は中央build policyまたはapp固有policyに従います。
 - **完了** — 実装と必要検証まで完了。
 - **作業完了 / 検証保留** — 実装は完了したが必要検証の一部がblocked。
 - **未完了** — 実装、移行、設定変更そのものに残作業がある。
+
+Major Change Planning経由では、Planning complete / Implementation complete / Cleanup completeを分離します。新系の実装成功だけで旧系削除まで完了扱いしません。
