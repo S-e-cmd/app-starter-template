@@ -121,6 +121,9 @@
 - known issueがconfirmedでも、それだけでcurrent task scopeへ昇格させていない。
 - Major Change Planningが必要とconfirmedされた場合、整備の延長として大規模実装へ直行していない。
 - Major Change候補の必要性確認がscope外なら、それ自体を新しいexploratory continuation理由にしていない。
+- `app-starter-template` に準じた整備時、各アプリのhandoffへparent starterのMajor Change Planning入口を残した。
+- 各アプリ側には共通Protocol全文を複製せず、現在の保護対象・Major Change候補になり得るアプリ固有境界・変更禁止契約・既存roadmap / migration / rollback plan参照を必要に応じ記録した。
+- アプリ固有のMajor Change候補境界を将来の実行authorizationや `major-change-planning-required` の確定判定として扱っていない。
 - README / docsの古い記述を、current stateを誤認させるrequired fixか、単なる過去計画・将来メモ等のoptional noteかに分類した。
 - current architecture / public method / storage / API / handoff情報を誤って説明するREADME / docsを、今回scope内ならdocumentation direct-changeとして扱った。
 - 単なる将来メモや利便性リンク追加だけでcurrent scopeを広げたり `continue` を推奨したりしていない。
