@@ -472,3 +472,72 @@ Major Change Planningも、通常変更では安全に目的達成できないco
 - Planning completeを全体complete、new system verifiedをold system deletion authorizedへ誤拡張できないか。
 
 別AIでscope / Evidence / Production Mutation / authorization / continuation / completion / Protocolの結論が合理的に割れるcaseは、rule不足または表現曖昧のEvidenceとして扱います。
+
+## 28. continuation eligibility
+
+**Maintenance need is not continuation permission.**
+
+`high / medium / low / hold` はアプリ全体に残る保守riskの評価であり、current taskを続けてよいかとは別に判定します。
+
+自動継続できるのは、次をすべて満たす場合だけです。
+
+1. 対象workが未完了である。
+2. current task scope内にある。
+3. 未完了の `direct-change`、または第2節の条件を満たす未完了の `required-propagation` である。
+4. ユーザーの既存continuation authorizationが次batchへ適用できる。
+5. 新しいuser choice / operation-specific authorizationが不要である。
+
+`read-only`、`限定確認`、`安全な範囲`、`confirmedなものだけ変更` 等はexecution safetyであり、scope inclusionやcontinuation eligibilityを作りません。
+
+次だけでは継続理由にしません。
+
+- current scope外のknown issue / bug。
+- recommended improvement / optional refactor / cleanup候補。
+- exploratory inspection / additional review opportunity。
+- unconfirmed maintenance risk。
+- fileが大きい / 複雑 / 責務が多そうであること。
+- 「調べれば問題が見つかるかもしれない」。
+
+ユーザーが「完了まで進める」「ロードマップ通り進める」「残課題を順に処理する」等を明示済みでも、この条件を満たす当初scope内の次batchにだけcontinuation authorizationを適用します。
+
+## 29. preparation convergence
+
+**Preparation work is subordinate to a concrete execution target.**
+
+安全準備、test、staging、補助script等をrequired-propagationとして扱う場合は、準備が支えるcurrent scope内の**concrete execution target**を特定します。
+
+required preparationにできるのは、その準備がないと次のいずれかが成立しないことを示すconfirmed Evidenceがある場合です。
+
+- execution targetを安全に実行できない。
+- required outcomeを正しく検証できない。
+- 必要なrollback / recoveryを実行・確認できない。
+
+「さらに強いtest」「coverage増加」「追加の安全余裕」「将来debugしやすい」だけではrequired preparationにしません。
+
+Preparation Aがrequiredでも、Aを支えるPreparation Bが自動的にrequiredになるわけではありません。Bも最終的なexecution targetの安全な実行 / required verification / required recoveryまで必要因果が戻るか再判定します。
+
+必要なprecondition、verification、rollback / recovery条件が満たされたらpreparationは収束済みです。direct-change本体がunfinishedなら、次batchは原則execution target本体へ進みます。
+
+preparationを再開できるのは、新しいconfirmed Evidenceによってexecution failure、verification invalidation、rollback / recovery failure、contract / data safety failure、またはrequired conditionの変化が判明した場合です。
+
+この原則はFeature Change / Existing App Alignment / Data Migration / Environment Change / Major Change等に共通適用します。ただし各Protocol固有のrequired safety conditionsは省略しません。
+
+## 30. batch completionとcurrent task completion
+
+**Batch complete does not imply current task complete.**
+
+batch / execution targetの完了と、ユーザーが依頼したcurrent task全体の完了を分けて判定します。
+
+各batch終了時は次の順で確認します。
+
+1. 今回batch / execution targetのrequired outcomeが完了したか。
+2. 元のuser intentとcurrent task scopeを再確認する。
+3. current task scope内に具体的な未完了 `direct-change` またはvalid `required-propagation` が残るか確認する。
+4. 残る場合は第28節でnext batchのcontinuation eligibilityを判定する。
+5. current task scope内のrequired workが尽き、残りがoptional improvement / exploratory work / separate taskだけの場合に `finish-for-now` を検討する。
+
+ユーザーが「アプリ全体の整備」「完了まで」「ロードマップ通り」「残課題を順に」等の広いscopeを明示している場合、1責務や1batchのcompleteだけでtask全体をcompleteにしません。`PROJECT_STATUS.md`、明示済みroadmap、既知のunfinished items等と照合します。
+
+逆に、広い整備scopeでも「まだ何か改善できそう」だけで新しいworkを追加しません。具体的なunfinished workが必要です。
+
+最新starterを再確認する場合も、最新差分だけを適用して既存ruleを落としません。current taskに適用される正本rule一式、元のuser intent、現在のproject status / roadmap / unfinished workを統合して判断します。
