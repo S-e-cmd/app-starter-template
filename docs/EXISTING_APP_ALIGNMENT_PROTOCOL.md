@@ -39,6 +39,7 @@
 - 整備候補を発見しても、現在scope外なら `PROJECT_STATUS.md` に記録するだけにする。
 - Evidenceがない「未使用」「原因」「不要」「安全」等の断定を行わない。
 - 既知issueであることはcurrent task scopeに含まれることを意味しない。
+- 「さらに調べれば問題が見つかるかもしれない」「保守性向上に役立つ」という理由だけでexploratory inspection、補助script、検査tool、任意refactorをcurrent scopeへ追加しない。
 
 ## 高リスク条件への切替
 
@@ -92,9 +93,10 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 6. `docs/PROJECT_STATUS.md` に今回の変更、確認済み範囲、blocked項目、残タスク、意図的な例外を記録する。
 7. 現在の整備必要度を評価する。
 8. 今回scopeの完了状態を判定する。
-9. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
-10. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
-11. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
+9. continuation eligibilityを、maintenance needとは独立して判定する。
+10. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
+11. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
+12. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
 
 不具合修正と無関係な大規模refactorは同じバッチへ混在させません。
 
@@ -108,6 +110,10 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 - **保留** — 重要箇所がblockedで安全性評価に必要な材料が不足。
 
 未確認を異常扱いしません。
+
+**Maintenance need is not continuation permission.**
+
+`high / medium` はアプリ全体に残るriskの評価であり、current taskの自動継続許可ではありません。maintenance needが高くても、current scopeがcompleteで自動継続可能な未完了workがなければ、それだけを理由に `continue` を推奨しません。
 
 ## バッチ終了時のdecision reporting
 
@@ -127,10 +133,13 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 
 **毎バッチ必ずユーザー選択を要求しません。**
 
-自動継続できるのは、現在task scope内に次の未完了作業が残る場合だけです。
+自動継続できるのは、次をすべて満たす場合だけです。
 
-- 未完了の `direct-change`。
-- 中央Evidence条件を満たし、現在scopeへ属する未完了の `required-propagation`。
+1. 対象workが未完了である。
+2. current task scope内にある。
+3. 未完了の `direct-change`、または中央Evidence条件を満たす未完了の `required-propagation` である。
+4. ユーザーの既存continuation authorizationがその次batchへ適用できる。
+5. 新たなuser choiceやoperation-specific authorizationを必要としない。
 
 ユーザーが現在の依頼で、例えば次を明示している場合は、上記条件を満たす安全な次batchへ自動継続できます。
 
@@ -147,8 +156,27 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 - unrelated issue。
 - 任意refactor / cleanup候補。
 - 将来改善候補。
+- potential improvement。
+- exploratory inspection。
+- 「調べれば問題があるかもしれない」という追加調査。
+- unconfirmed maintenance risk。
+- fileが大きい / 複雑であること。
+- responsibility mixingの可能性だけがある状態。
+- additional review opportunity。
+- future maintenance candidate。
+
+「具体的な問題があるかを見る価値がある」だけではunfinished in-scope workとして扱いません。
+
+exploratory inspection自体は禁止しません。次のいずれかでcurrent scopeへ含まれている場合は実施できます。
+
+- ユーザーが全体確認・追加調査まで明示している。
+- 既存ロードマップに具体的なinspection taskとして含まれている。
+- direct-changeを安全に完了するためvalid required-propagationとして必要である。
+- confirmed Evidenceによりcurrent taskの成功判定に追加確認が必要である。
 
 既知issueはEvidenceとしてconfirmedでも、current task scopeへ自動昇格しません。必要なら `PROJECT_STATUS.md` に記録し、別task候補として提示します。ユーザーが明示的にcurrent scopeへ追加した時点で初めて継続対象になります。
+
+補助script・検査toolの新設も同じscope ruleに従います。「今後便利」「保守性が上がる」「確認に役立つ」だけでは自動追加しません。current direct-changeに不可欠ならEvidence付きrequired-propagationとして扱い、それ以外はoptional future workです。
 
 次の場合は停止して選択または個別許可を求めます。
 
