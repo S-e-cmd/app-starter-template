@@ -87,7 +87,11 @@
 - scope拡大 / Production Mutation / 高リスク操作 / 実質的方針選択が必要な該当部分だけ停止した。
 - 各batch終了時に、user choiceの有無とは別にmaintenance need / scope completion / recommended action / reasonをユーザーへ報告した。
 - `continue` を推奨する場合は具体的なnext batchを報告した。
+- continuation eligibilityをexecution method / safetyより先に判定した。
 - auto continueはcurrent task scope内の未完了direct-changeまたはvalid required-propagationが残る場合だけにした。
+- `read-only` / `限定確認` / `安全な範囲` であることをscope inclusionやunfinished statusの根拠にしていない。
+- 「confirmedなものだけ変更する前提の調査」を、それだけでunfinished in-scope workへ昇格していない。
+- scope complete後の追加inspectionをoptional future workとして分離した。
 - current scope外のknown issue / bug / recommended improvement / unrelated issueをcontinuation justificationへ使っていない。
 - known issueがconfirmedでも、それだけでcurrent task scopeへ昇格させていない。
 
