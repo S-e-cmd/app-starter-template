@@ -40,6 +40,7 @@
 - Evidenceがない「未使用」「原因」「不要」「安全」等の断定を行わない。
 - 既知issueであることはcurrent task scopeに含まれることを意味しない。
 - 「さらに調べれば問題が見つかるかもしれない」「保守性向上に役立つ」という理由だけでexploratory inspection、補助script、検査tool、任意refactorをcurrent scopeへ追加しない。
+- `read-only`、`限定確認`、`安全な範囲だけ調べる`、`confirmedなものだけ変更する` 等はrisk controlであり、それ自体はscope inclusionやunfinished statusを作らない。
 
 ## 高リスク条件への切替
 
@@ -93,10 +94,11 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 6. `docs/PROJECT_STATUS.md` に今回の変更、確認済み範囲、blocked項目、残タスク、意図的な例外を記録する。
 7. 現在の整備必要度を評価する。
 8. 今回scopeの完了状態を判定する。
-9. continuation eligibilityを、maintenance needとは独立して判定する。
-10. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
-11. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
-12. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
+9. continuation eligibilityを、maintenance needとexecution safetyから独立して先に判定する。
+10. continuation eligibilityが成立したworkについて、安全なexecution方法を選ぶ。
+11. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
+12. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
+13. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
 
 不具合修正と無関係な大規模refactorは同じバッチへ混在させません。
 
@@ -133,6 +135,10 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 
 **毎バッチ必ずユーザー選択を要求しません。**
 
+**Exploration may be safe, but safety does not make it required.**
+
+continuation eligibilityはexecution方法より先に判定します。`read-only`、`限定確認`、`安全な範囲だけ調べる`、`confirmedなものだけ変更する`、`問題がなければ変更しない` 等の条件は、安全な実施方法を示すだけで、自動継続資格を作りません。
+
 自動継続できるのは、次をすべて満たす場合だけです。
 
 1. 対象workが未完了である。
@@ -164,8 +170,13 @@ Production Mutationが必要になった場合は、tool上実行可能でもaut
 - responsibility mixingの可能性だけがある状態。
 - additional review opportunity。
 - future maintenance candidate。
+- read-onlyで実施できること。
+- 限定確認だけで済むこと。
+- confirmedな問題だけ変更する予定であること。
+- 大規模refactorをしない予定であること。
+- まず問題の有無だけ確認すること。
 
-「具体的な問題があるかを見る価値がある」だけではunfinished in-scope workとして扱いません。
+「具体的な問題があるかを見る価値がある」だけではunfinished in-scope workとして扱いません。`confirm first, change only if confirmed` という進め方も、そのinspection自体がcurrent scope内でなければexploratory workのままです。
 
 exploratory inspection自体は禁止しません。次のいずれかでcurrent scopeへ含まれている場合は実施できます。
 
