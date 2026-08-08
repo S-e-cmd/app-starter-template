@@ -62,6 +62,22 @@ GitHub repository URL、公開URL、starter参照があること自体は整備�
 - blocked / unknown / mismatchに依存する後続作業もholdするが、独立したin-scope作業は継続する。
 - 選択肢が必要な場合だけ `docs/BATCH_COMPLETION_CHOICES.md` を使用する。
 
+## Major Change Planning
+
+通常のFeature Change / Existing App Alignmentだけではrequired outcomeを安全に達成できないことがconfirmedされた場合、実装へ直行せず `docs/MAJOR_CHANGE_PLANNING.md` をplanning / routing gateとして使用します。
+
+- Major判定はfile数・line数・変更量ではなく、contract / architecture / transition impactで行う。
+- inferred / unknownの段階では `possible major change` に留める。
+- `Major Change Planning Required ≠ rewrite authorized`。
+- Planningでは保護対象、変更対象、contract impact、migration、environment、rollback、現実的な移行方式、batch依存関係を整理する。
+- 方式承認だけで未列挙のProduction Mutationやdestructive operationをauthorized扱いしない。
+- 実operationはFeature Change / Data Migration / Environment Change / Cleanup / Incident Recovery / Dependency Update等へroutingする。
+- `major-change-planning-required` はrouting状態でありoverall completion stateではない。
+- Planning complete / Implementation complete / Cleanup completeを分離する。
+- `new system verified ≠ old system deletion authorized`。
+
+Major Change Planningは「大きそうだから止める」ためのgateではありません。通常の局所的・段階的変更ではrequired outcomeを安全に達成できないconfirmed境界でだけ使用します。
+
 ## 障害復旧
 
 白画面、起動不能、ログイン不能、主要機能停止、data消失疑い等では `docs/INCIDENT_RECOVERY_PROTOCOL.md` を使用します。
@@ -101,6 +117,7 @@ Evidence条件とuser authorizationは別軸です。
 - scope 3区分とrequired-propagation Evidence条件。
 - Evidence Rule。
 - 通常仕様の情報源優先順位と安全停止条件の分離。
+- Major Change Planning gateと通常変更との境界。
 - Production Mutationと正規化authorization fingerprint。
 - security containmentとauthorizationの境界。
 - 実data検証の段階。
@@ -125,6 +142,7 @@ Evidence条件とuser authorizationは別軸です。
 - `docs/BOOTSTRAP_PROTOCOL.md` — 新規app初期化。
 - `docs/FEATURE_CHANGE_PROTOCOL.md` — 通常更新。
 - `docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md` — 非破壊整備。
+- `docs/MAJOR_CHANGE_PLANNING.md` — 大規模変更前のplanning / routing gate。
 - `docs/INCIDENT_RECOVERY_PROTOCOL.md` — 障害復旧。
 - `docs/DATA_MIGRATION_PROTOCOL.md` — data移行。
 - `docs/ENVIRONMENT_CHANGE_PROTOCOL.md` — 環境・設定変更。
