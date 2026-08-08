@@ -48,6 +48,33 @@
 
 Production Mutationが必要になった場合は、tool上実行可能でもauthorizationを別途確認します。
 
+## Major Change Planningへの出口
+
+整備中に、通常の局所的・段階的な整理ではcurrent required outcomeを安全に達成できないことが**confirmed Evidence**で確認された場合は、整備の延長として大規模変更へ進みません。`MAJOR_CHANGE_PLANNING.md` をplanning / routing gateとして適用します。
+
+Major Change候補は変更量ではなく、architecture / contract / transition impactで判断します。
+
+Major Change Planning候補になり得る例:
+
+- 現在architecture上の制約が目的達成を直接妨げている。
+- 局所整理ではrequired outcomeを満たせない。
+- API / storage / auth / deployment等のcontract変更が不可避。
+- 旧実装との互換維持にmigration / transition設計が必要。
+
+次だけではMajor Changeへ移りません。
+
+- fileが大きい / 複雑 / 古い。
+- 責務が多そう。
+- templateと構成が違う。
+- modern化・全面整理した方が綺麗。
+- 複数fileを触る可能性がある。
+
+Evidenceがinferred / unknownなら `possible major change` に留めます。必要性確認がcurrent scopeに含まれていない場合、それ自体を探索継続理由にしません。
+
+**Major Change Planning Required ≠ rewrite authorized.**
+
+Planningへ移った場合、整備scopeのcompletionとMajor Change Planningのrouting状態を混同しません。現在の整備batchがcompleteなら、その事実を保ったまま「次に進むならPlanningが必要」と報告できます。逆に、current required outcome自体がMajor Change Planningなしでは未完了なら、そのoutcomeはcompleteにしません。
+
 ## テンプレートの扱い
 
 既存アプリでは次を禁止します。
@@ -109,9 +136,10 @@ required documentation writeがtool / permission / safety gate等でblockedに�
 8. 今回scopeの完了状態を判定する。
 9. continuation eligibilityを、maintenance needとexecution safetyから独立して先に判定する。
 10. continuation eligibilityが成立したworkについて、安全なexecution方法を選ぶ。
-11. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
-12. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
-13. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
+11. Major Change Planning gateが必要かを中央ruleで判定する。判定だけで実装authorizationへ進めない。
+12. 推奨判断 `continue / finish-for-now / prioritize-another-area` と理由を決める。
+13. batch decisionをユーザーへ報告する。`continue` の場合は具体的な次batchも報告する。
+14. 継続条件に従い、自動継続するか、ユーザー選択・個別authorizationを求める。
 
 不具合修正と無関係な大規模refactorは同じバッチへ混在させません。
 
@@ -141,6 +169,8 @@ required documentation writeがtool / permission / safety gate等でblockedに�
 - 推奨判断: `continue / finish-for-now / prioritize-another-area`。
 - 推奨理由。
 - `continue` の場合のみ、次に扱う具体的batch。
+
+Major Change Planningが必要とconfirmedされた場合は、必要に応じて `major-change-planning-required` を別のrouting状態として明示します。これはscope completionの代替値ではありません。
 
 「毎batchユーザー選択を要求しない」ことは、「判断結果を報告しなくてよい」ことを意味しません。自動継続する場合も、現在状態と次batchをユーザーへ見える形で報告します。
 
@@ -208,6 +238,7 @@ exploratory inspection自体は禁止しません。次のいずれかでcurrent
 - 新たなProduction Mutationや破壊的操作が必要。
 - 高リスクProtocolへ切り替わり、operation-specific authorizationが必要。
 - 複数の実質的に異なる方式からユーザー判断が必要。
+- Major Change Planningで移行方式の選択が必要。
 - ユーザーが各バッチで選択肢提示を希望している。
 
 選択肢を提示する場合は `docs/BATCH_COMPLETION_CHOICES.md` に従います。
@@ -232,5 +263,7 @@ exploratory inspection自体は禁止しません。次のいずれかでcurrent
 - **未完了** — 整備作業そのものに残作業がある。required documentation writeのblockedもここに含む。
 
 必要に応じて implementation / deployment / verification / documentation を `complete / pending / not-applicable` で記録します。
+
+Major Change Planningが必要な場合でも、`major-change-planning-required` をoverall completion stateへ混ぜません。Planning complete / Implementation complete / Cleanup completeは `MAJOR_CHANGE_PLANNING.md` で分離します。
 
 既存アプリの完了条件はtemplateとの一致ではなく、今回scopeの変更が安全に完了し、既存動作とdata contractを保護し、次の作業者が現在状態を理解できることです。
