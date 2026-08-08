@@ -16,6 +16,36 @@
 
 「毎batchユーザー選択を要求しない」ことは、「batch終了時の判断提示を省略してよい」ことを意味しません。自動継続する場合も、現在状態と次batchを報告します。
 
+## batch completionとcurrent task completionを分離する
+
+**Batch complete does not imply current task complete.**
+
+1つのexecution targetや責務分離が完了しても、それだけでユーザーが依頼したcurrent task全体を `finish-for-now` にしません。
+
+各batch終了時は、次の順に別々に判定します。
+
+1. 今回batch / execution targetがcompleteか。
+2. ユーザーが定義したcurrent task scopeを再確認する。
+3. current task scope内に、具体的な未完了 `direct-change` またはvalid `required-propagation` が残っているか確認する。
+4. 残っている場合は、その具体的next batchについてcontinuation eligibilityを判定する。
+5. current task scope内のrequired workが尽き、残りがoptional improvement / exploratory work / separate taskだけの場合に `finish-for-now` を検討する。
+
+ユーザーが「アプリ全体の整備」「完了まで進める」「ロードマップ通り進める」「残課題を順に処理する」等の広いcurrent task scopeを明示している場合、1つのbatchや1責務がcompleteになっただけでは、その広いscopeを完了扱いしません。現在の `PROJECT_STATUS.md`、明示済みroadmap、未完了項目等から、**当初scopeに既に含まれる具体的な残作業**を確認します。
+
+逆に、「まだ何か改善できそう」「別責務も調べたい」というだけで新しい作業をcurrent taskへ追加しません。広い整備scopeであっても、具体的な未完了workが存在することは必要です。
+
+### starter再確認時
+
+「最新の `app-starter-template` を再確認して」と求められた場合、最新commitの差分や直近追加ruleだけを現在taskへ適用して判断しません。
+
+- 最新starterのrevisionを確認する。
+- current taskに適用される既存rule一式を統合して読む。
+- 元のuser intent / current task scopeを維持する。
+- 現在のproject status / roadmap / unfinished workと照合する。
+- 最新差分は既存ruleを置き換えるものではなく、矛盾がない限り追加・明確化として統合する。
+
+したがって、例えば最新差分がpreparation convergenceを強調していても、「準備が収束した → execution完了 → task全体も終了」と短絡しません。execution target完了後は、改めてcurrent task全体の残作業を判定します。
+
 ## maintenance needとcontinuationは別判定
 
 **Maintenance need is not continuation permission.**
@@ -23,6 +53,8 @@
 `high / medium / low / hold` はアプリ全体に残る保守riskの評価です。`medium` や `high` であることだけでは `continue` を正当化しません。
 
 current scopeがcompleteで、未完了のdirect-changeまたはvalid required-propagationが残っていなければ、maintenance needがmedium / highでも原則 `finish-for-now` とします。残るriskや改善候補は別task候補として記録・提示できます。
+
+ただし、ここでいう `current scopeがcomplete` は「直前batchがcomplete」という意味ではありません。ユーザーが定義したcurrent task scope全体に具体的なrequired workが残っていないことを確認してから判定します。
 
 ## 自動継続できる条件
 
@@ -122,6 +154,8 @@ batch decisionでは、必要に応じて次を短く明示します。
 [別の箇所を優先] — 気になる機能・UI・保存・公開周りなどを指定
 ```
 
+この例の `今回scope: Complete` はcurrent task scope全体がcompleteな場合です。直前batchだけがcompleteでcurrent taskに未完了workが残る場合は、`finish-for-now` の根拠に使用しません。
+
 ## 選択肢の意味
 
 ### 今回は終了
@@ -131,6 +165,8 @@ batch decisionでは、必要に応じて次を短く明示します。
 maintenance needがmedium / highでも、current scopeがcompleteで残りがexploratory candidate / known issue / recommended improvement等だけなら、それだけを理由に `continue` を推奨しません。
 
 safe / read-only / limitedな追加inspectionだけが候補として残る場合も、current scopeがcompleteなら原則 `finish-for-now` とし、必要ならoptional future workとして提示します。
+
+1つのbatch / execution targetがcompleteしただけでは `今回は終了` を推奨しません。current task scope全体のrequired workが尽きていることを先に確認します。
 
 ### 続ける
 
@@ -163,6 +199,8 @@ current task scope内に具体的な未完了direct-changeまたはvalid require
 - 補助script・検査toolを便利さだけでcurrent scopeへ自動追加する。
 - execution-readyなのに、新しいblocking Evidenceなしで追加test / coverage / stagingだけのpreparation-only batchを継続する。
 - required preparation Aに役立つという理由だけでPreparation Bをrequired-propagationへ自動昇格する。
+- 直前batchのcompleteをcurrent task全体のcompleteへ自動昇格する。
+- 最新starterの直近差分だけを読み、元のuser intent / current task scope /既存continuation ruleを落として判断する。
 - `[続ける]` などlabelだけを並べ、何が起きるか説明しない。
 - 推奨理由を示さずに選択を求める。
 - `別の箇所を優先` をAI側の別候補選択として扱う。
