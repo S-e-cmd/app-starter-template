@@ -48,6 +48,27 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 
 `continue` を単なる会話上のlabelとして繰り返し、実行可能なnext batchがあるのに説明だけで停止しません。
 
+### 誤って停止した後の自己訂正
+
+前turnで、本来 `continue` すべき状態なのに候補提示・判断説明・自己評価だけで停止していたことを後から確認した場合、**「前回止まったのは誤りでした」と説明するだけで再びturnを終了しません。**
+
+その時点で中央ruleのcontinuation eligibilityを再確認し、条件がまだ成立しているなら、訂正と同じturnで未実行だった具体的next batchへ復帰します。
+
+前回の不適切な停止や、その説明を挟んだこと自体は、新しいuser choiceを必要とする理由にも、既存continuation authorizationを失効させる理由にもなりません。
+
+停止できるのは、再確認時に新しいuser choice / operation-specific authorization / blocked input / tool limitation / confirmed blockerが実際に生じている場合だけです。
+
+したがって、次のような自己訂正だけで終えません。
+
+```text
+前回はここで止めたのが誤りでした。
+current task: incomplete
+推奨: continue
+次batchは○○です。
+```
+
+continuation eligibilityが成立しているなら、この報告に続けて○○の実作業へ着手します。
+
 ## finish-for-now
 
 中央ruleでcurrent task scope内のrequired workが尽き、残りがoptional improvement / exploratory work / separate taskだけの場合に使用します。
@@ -146,6 +167,7 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 - 次候補がrequired workかoptional candidateかを曖昧にしたまま停止する。
 - `continue` なのに具体的next batchを示さない。
 - continuation可能なのに、同じ判断説明だけを繰り返して実作業へ進まない。
+- 前回の不適切な停止を自己訂正しただけで、continuation eligibilityが成立しているのに再び停止する。
 - `finish-for-now` の根拠を「直前batchがcomplete」だけにする。
 - maintenance needの高さだけで `continue` を表示する。
 - optional / exploratory workをrequired workのように表示する。
