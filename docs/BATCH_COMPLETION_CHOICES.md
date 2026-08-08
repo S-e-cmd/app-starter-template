@@ -26,6 +26,10 @@ current scopeがcompleteで、未完了のdirect-changeまたはvalid required-p
 
 ## 自動継続できる条件
 
+**Exploration may be safe, but safety does not make it required.**
+
+continuation eligibilityを先に判定し、その後でexecution safetyを選びます。`read-only`、`限定確認`、`安全な範囲だけ調べる`、`confirmedなものだけ変更する` 等はrisk controlであり、それ自体はcurrent scope inclusionやunfinished statusを作りません。
+
 自動継続できるのは、次をすべて満たす場合だけです。
 
 1. 対象workが未完了である。
@@ -49,8 +53,14 @@ current scopeがcompleteで、未完了のdirect-changeまたはvalid required-p
 - responsibility mixingの可能性だけがある状態。
 - additional review opportunity。
 - future maintenance candidate。
+- read-onlyで安全に確認できること。
+- 限定確認だけで済むこと。
+- confirmedな問題だけ変更する予定であること。
+- 大規模refactorをしない予定であること。
+- まず問題の有無だけ確認すること。
+- 問題がなければ変更しない予定であること。
 
-「具体的な問題があるかを見る価値がある」という理由だけではunfinished in-scope workになりません。
+「具体的な問題があるかを見る価値がある」という理由だけではunfinished in-scope workになりません。`confirm first, change only if confirmed` という進め方も、そのinspection自体がcurrent scope内でなければexploratory workのままです。
 
 known issueであることやEvidenceがconfirmedであることだけでは、current task scopeへ昇格しません。必要なら記録し、別task候補として扱います。
 
@@ -97,6 +107,8 @@ exploratory inspection自体は禁止しません。次の場合はcurrent scope
 
 maintenance needがmedium / highでも、current scopeがcompleteで残りがexploratory candidate / known issue / recommended improvement等だけなら、それだけを理由に `continue` を推奨しません。
 
+safe / read-only / limitedな追加inspectionだけが候補として残る場合も、current scopeがcompleteなら原則 `finish-for-now` とし、必要ならoptional future workとして提示します。
+
 ### 続ける
 
 current task scope内に具体的な未完了direct-changeまたはvalid required-propagationが残る場合だけ推奨できます。
@@ -120,6 +132,8 @@ current task scope内に具体的な未完了direct-changeまたはvalid require
 - maintenance needがmedium / highであることだけをcontinuation justificationに使う。
 - current scope外のknown issueを自動継続理由へ使う。
 - exploratory inspection、potential improvement、unconfirmed maintenance riskをunfinished in-scope workへ自動昇格する。
+- `read-only`、`限定確認`、`安全な範囲`、`confirmedなものだけ変更` 等の安全条件をcontinuation justificationへ使う。
+- continuation eligibilityを判定する前に「安全に実行できるから」を理由としてnext batch化する。
 - 「もっと調べる価値がある」だけで `continue` を推奨する。
 - 補助script・検査toolを便利さだけでcurrent scopeへ自動追加する。
 - `[続ける]` などlabelだけを並べ、何が起きるか説明しない。
