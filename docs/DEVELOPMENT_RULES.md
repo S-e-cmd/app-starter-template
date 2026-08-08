@@ -70,12 +70,34 @@ Production Mutationの対象・許可状態は `PROTOCOL_ROUTING_RULES.md` を�
 
 GitHub等への書き込み時にSHAや内容の競合が起きた場合、古い内容で上書きしません。
 
-1. 最新版を再取得する。
-2. 他者・別Chatの変更を確認する。
-3. 自分の差分だけを最新内容へ再適用する。
-4. 競合解消のために他の正常変更を無断で削除しない。
+**SHA conflict / stale SHAは、それ自体ではstop conditionではありません。current stateを再取得し、安全な再適用可否を確認するtriggerです。**
 
-長時間作業後や重要fileへの書き込み前は、必要に応じて現在SHA・内容を再確認します。
+標準手順:
+
+1. 対象fileの最新版とcurrent SHAを再取得する。
+2. concurrent changeと今回予定していたown diffを比較する。
+3. file単位ではなく、今回変更するlogic / contract / state / assumptionとのsemantic overlapを確認する。
+4. concurrent changeを維持したまま安全に再適用できる場合は、自分のdiffだけを最新内容へ再構成して再度writeする。
+5. concurrent changeによって同等の目的状態がすでに実装済みなら、重複適用せずown diffを不要として扱い、purpose stateを再確認する。
+6. 再適用後は今回scopeに必要なverificationを行う。
+
+同じfile、同じfunction、同じ行付近に変更があることだけではsemantic conflictとみなしません。別logic、コメント、今回contractに影響しない追加処理等は、意味的に独立していれば継続できます。
+
+同じlogicへ変更があっても、concurrent changeを保持した安全な統合結果をEvidence付きで一意に再構成できる場合は継続できます。
+
+次の場合だけ、該当部分をblockedとして扱います。
+
+- concurrent changeによって今回の前提・contractが変わった。
+- 両変更の意図が競合し、一方を採用すると他方の正常挙動を破壊する。
+- どのcontract / implementationを採用するかユーザー判断が必要。
+- 最新状態でscope / safety / authorization判断自体が変わる。
+- safe merge / reapply方法をEvidence付きで一意に決められない。
+
+blockedでもtask全体へ自動伝播させません。中央dependent hold ruleに従い、blocked input / contract / safety / authorizationへ実dependencyがある後続作業だけholdし、独立したin-scope作業は継続します。
+
+競合解消のために他者・別Chatの正常変更を削除したり、古い内容へ戻したりしません。
+
+長時間作業後や重要fileへの書き込み前は、必要に応じてcurrent SHA・内容を再確認します。
 
 ## 変更後
 
