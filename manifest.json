@@ -142,7 +142,7 @@
       "production-auth-or-storage-backend-switch",
       "production-permission-role-acl-or-access-control-change",
       "production-cron-trigger-scheduled-job-or-consumer-change",
-      "new-production-resource-that-switches-existing-binding-routing_storage-or-target"
+      "new-production-resource-that-switches-existing-binding-routing-storage-or-target"
     ],
     "irreversibleOrHardToRecoverRequiresOperationSpecificAuthorization": true,
     "requireImpactAndRecoveryPlanBeforeExecution": true
