@@ -85,6 +85,11 @@
 - 整備候補がscope外なら記録だけにした。
 - 既に「完了まで」「ロードマップ通り」等の継続指示がある場合、毎batch停止していない。
 - scope拡大 / Production Mutation / 高リスク操作 / 実質的方針選択が必要な該当部分だけ停止した。
+- 各batch終了時に、user choiceの有無とは別にmaintenance need / scope completion / recommended action / reasonをユーザーへ報告した。
+- `continue` を推奨する場合は具体的なnext batchを報告した。
+- auto continueはcurrent task scope内の未完了direct-changeまたはvalid required-propagationが残る場合だけにした。
+- current scope外のknown issue / bug / recommended improvement / unrelated issueをcontinuation justificationへ使っていない。
+- known issueがconfirmedでも、それだけでcurrent task scopeへ昇格させていない。
 
 ## dependent hold
 
