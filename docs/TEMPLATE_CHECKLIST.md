@@ -91,6 +91,19 @@
 - current scope外のknown issue / bug / recommended improvement / unrelated issueをcontinuation justificationへ使っていない。
 - known issueがconfirmedでも、それだけでcurrent task scopeへ昇格させていない。
 
+## concurrency / stale SHA
+
+- SHA conflict / stale SHAを検出しただけでstopしていない。
+- conflict後にcurrent fileとcurrent SHAをrefetchした。
+- concurrent changeを確認し、古い内容で上書きしていない。
+- semantic conflictをfile単位・行単位だけで決めず、今回変更するlogic / contract / state / assumptionとの実overlapで判定した。
+- 安全に統合可能ならconcurrent changeを維持し、own diffだけをcurrent stateへ再構成して再適用した。
+- concurrent changeによって同等の目的状態がすでに実装済みなら、own diffを重複適用せずpurpose stateを再確認した。
+- 同じfile / functionに変更があるだけで自動blockedにしていない。
+- safe merge方法をEvidence付きで一意に決められない場合だけaffected partをblockedにした。
+- conflict blocked時もdependent holdを適用し、実dependencyのないin-scope作業を全面停止していない。
+- conflict解消のために他者・別Chatの正常変更を削除・巻き戻ししていない。
+
 ## dependent hold
 
 hold伝播が必要なのは、後続作業がblocked inputを直接使用する、blocked contractで実装内容が変わる、またはsafety / authorization判断がblocked結果に依存する場合です。
