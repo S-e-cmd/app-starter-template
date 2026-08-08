@@ -60,6 +60,48 @@ Repo URL、公開URL、starter参照の有無だけではモードを決めま�
 - sourceが存在するgenerated / derived fileは、原則source側を変更する。
 - 主要保存先、認証、API、公開方式をsilent fallbackで切り替えない。
 
+## 準備作業の収束
+
+**Preparation work is not an independent continuation target.**
+
+安全準備・検査・staging・補助script等を `required-propagation` として行う場合、その作業はcurrent scope内の**具体的なexecution target**と、そのtargetに必要なverification / rollback / recovery条件へ従属させます。
+
+準備開始時または新しい準備を追加する時は、少なくとも次を明確にします。
+
+- concrete execution target — 次に実際に変更・移行・切替する対象。
+- remaining required preparation — execution targetの安全な実行、required verification、必要なrollback / recoveryのため未充足の条件。
+- execution-ready — 上記required conditionsが現時点で満たされているか。これはoverall completion stateや新しいmachine-readable enumではなく、局所的なprecondition判断として扱う。
+
+準備作業をrequired-propagationにできるのは、その準備がないとconcrete execution targetについて次のいずれかが成立しないことを示す**confirmed Evidence**がある場合です。
+
+- 安全に実行できない。
+- required outcomeを正しく検証できない。
+- 必要なrollback / recoveryを実行・確認できない。
+
+次だけではrequired preparationにしません。
+
+- さらに強いtestを追加できる。
+- 境界caseやsemantic coverageを増やせる。
+- 安全余裕をさらに増やせる。
+- 将来のdebugや保守が楽になる。
+- 既存の準備作業やtestそのものを、さらに安全・完全にできる。
+
+Preparation Aがrequired-propagationであっても、Aを支えるPreparation Bが自動的にrequired-propagationになるわけではありません。Bについても、Aへの有用性ではなく、**最終的なconcrete execution targetの安全な実行・required verification・required recoveryへ必要因果が戻るか**を改めて判定します。
+
+concrete execution targetについて必要なprecondition、required verification、required rollback / recovery条件が満たされた時点でpreparationは収束したと扱います。direct-change本体が未完了なら、次batchは原則としてそのexecution targetを実行します。
+
+`execution-ready`になった後に「もっと安全にできる」「より強い任意testを作れる」「追加の安心材料がある」という理由だけでpreparation-only batchを追加しません。
+
+preparationを再開できるのは、新しい**confirmed Evidence**によって、次のような具体的blockerまたはrequired conditionの変化が判明した場合です。
+
+- execution failureが具体的に予見・確認された。
+- verification手段が無効または不十分になった。
+- rollback / recoveryが成立しない。
+- contract / data safety conditionを満たせない。
+- それまでのrequired safety / verification / recovery条件自体が変化した。
+
+この収束原則はExisting App Alignmentや通常Feature Changeだけでなく、Data Migration / Environment Change / Major Change等にも適用します。ただし各専用Protocolが要求する固有のbackup、dry-run、migration、rollback、authorization、verification条件は省略しません。固定batch数や固定test数ではなく、**required conditionsの充足**でpreparation完了を判定します。
+
 ## Production Mutation
 
 Production Mutationの対象・許可状態は `PROTOCOL_ROUTING_RULES.md` を正本とします。
