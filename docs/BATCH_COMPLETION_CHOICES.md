@@ -1,10 +1,12 @@
 # Batch Completion Choices
 
-既存アプリ非破壊整備モードでは、**batch decisionの報告**と**ユーザー選択の要求**を分離して扱います。
+この文書は、既存アプリ整備batchの**報告形式とユーザーinteraction**を定義します。
 
-## batch decision reportingは毎batch必須
+continuation eligibility、maintenance needとの分離、preparation convergence、batch completion / current task completion、scope、Evidence、authorization、completion stateの意味は `docs/PROTOCOL_ROUTING_RULES.md` を正本とします。この文書では再定義しません。
 
-ユーザーへ選択肢を出す必要がないbatchでも、終了時には最低限次を必ず報告します。
+## 毎batchの報告
+
+ユーザーへ選択肢を出す必要がない場合でも、batch終了時には最低限次を報告します。
 
 - 現在の整備必要度: `high / medium / low / hold`。
 - 今回scopeの完了状態: `complete / work-complete-verification-pending / incomplete`。
@@ -12,195 +14,81 @@
 - 推奨理由。
 - `continue` の場合のみ、次に扱う具体的batch。
 
-整備必要度は定義済みの `high / medium / low / hold` から**必ず1つだけ選びます**。`low-medium`、`低〜中`、`medium寄りのlow` 等の中間表現は使用しません。境界に迷う場合も、現在確認できているriskを基準に最も妥当な1値を選び、必要なら理由で補足します。
+整備必要度は4値から1つだけ選びます。`low-medium` 等の中間値は使いません。
 
-「毎batchユーザー選択を要求しない」ことは、「batch終了時の判断提示を省略してよい」ことを意味しません。自動継続する場合も、現在状態と次batchを報告します。
+## continue
 
-## batch completionとcurrent task completionを分離する
+中央ruleでcontinuation eligibilityが成立した場合に使用します。
 
-**Batch complete does not imply current task complete.**
-
-1つのexecution targetや責務分離が完了しても、それだけでユーザーが依頼したcurrent task全体を `finish-for-now` にしません。
-
-各batch終了時は、次の順に別々に判定します。
-
-1. 今回batch / execution targetがcompleteか。
-2. ユーザーが定義したcurrent task scopeを再確認する。
-3. current task scope内に、具体的な未完了 `direct-change` またはvalid `required-propagation` が残っているか確認する。
-4. 残っている場合は、その具体的next batchについてcontinuation eligibilityを判定する。
-5. current task scope内のrequired workが尽き、残りがoptional improvement / exploratory work / separate taskだけの場合に `finish-for-now` を検討する。
-
-ユーザーが「アプリ全体の整備」「完了まで進める」「ロードマップ通り進める」「残課題を順に処理する」等の広いcurrent task scopeを明示している場合、1つのbatchや1責務がcompleteになっただけでは、その広いscopeを完了扱いしません。現在の `PROJECT_STATUS.md`、明示済みroadmap、未完了項目等から、**当初scopeに既に含まれる具体的な残作業**を確認します。
-
-逆に、「まだ何か改善できそう」「別責務も調べたい」というだけで新しい作業をcurrent taskへ追加しません。広い整備scopeであっても、具体的な未完了workが存在することは必要です。
-
-### starter再確認時
-
-「最新の `app-starter-template` を再確認して」と求められた場合、最新commitの差分や直近追加ruleだけを現在taskへ適用して判断しません。
-
-- 最新starterのrevisionを確認する。
-- current taskに適用される既存rule一式を統合して読む。
-- 元のuser intent / current task scopeを維持する。
-- 現在のproject status / roadmap / unfinished workと照合する。
-- 最新差分は既存ruleを置き換えるものではなく、矛盾がない限り追加・明確化として統合する。
-
-したがって、例えば最新差分がpreparation convergenceを強調していても、「準備が収束した → execution完了 → task全体も終了」と短絡しません。execution target完了後は、改めてcurrent task全体の残作業を判定します。
-
-## maintenance needとcontinuationは別判定
-
-**Maintenance need is not continuation permission.**
-
-`high / medium / low / hold` はアプリ全体に残る保守riskの評価です。`medium` や `high` であることだけでは `continue` を正当化しません。
-
-current scopeがcompleteで、未完了のdirect-changeまたはvalid required-propagationが残っていなければ、maintenance needがmedium / highでも原則 `finish-for-now` とします。残るriskや改善候補は別task候補として記録・提示できます。
-
-ただし、ここでいう `current scopeがcomplete` は「直前batchがcomplete」という意味ではありません。ユーザーが定義したcurrent task scope全体に具体的なrequired workが残っていないことを確認してから判定します。
-
-## 自動継続できる条件
-
-**Exploration may be safe, but safety does not make it required.**
-
-continuation eligibilityを先に判定し、その後でexecution safetyを選びます。`read-only`、`限定確認`、`安全な範囲だけ調べる`、`confirmedなものだけ変更する` 等はrisk controlであり、それ自体はcurrent scope inclusionやunfinished statusを作りません。
-
-自動継続できるのは、次をすべて満たす場合だけです。
-
-1. 対象workが未完了である。
-2. current task scope内にある。
-3. 未完了の `direct-change`、または中央Evidence条件を満たす未完了の `required-propagation` である。
-4. ユーザーの既存continuation authorizationがその次batchへ適用できる。
-5. 新たなuser choice / operation-specific authorizationが不要である。
-
-次は自動継続理由にしません。
-
-- current scope外のknown issue / bug。
-- recommended improvement。
-- unrelated issue。
-- 任意refactor / cleanup候補。
-- 将来改善候補。
-- potential improvement。
-- exploratory inspection。
-- 「調べれば問題があるかもしれない」という追加調査。
-- unconfirmed maintenance risk。
-- fileが大きい / 複雑であること。
-- responsibility mixingの可能性だけがある状態。
-- additional review opportunity。
-- future maintenance candidate。
-- read-onlyで安全に確認できること。
-- 限定確認だけで済むこと。
-- confirmedな問題だけ変更する予定であること。
-- 大規模refactorをしない予定であること。
-- まず問題の有無だけ確認すること。
-- 問題がなければ変更しない予定であること。
-
-「具体的な問題があるかを見る価値がある」という理由だけではunfinished in-scope workになりません。`confirm first, change only if confirmed` という進め方も、そのinspection自体がcurrent scope内でなければexploratory workのままです。
-
-known issueであることやEvidenceがconfirmedであることだけでは、current task scopeへ昇格しません。必要なら記録し、別task候補として扱います。
-
-exploratory inspection自体は禁止しません。次の場合はcurrent scope内のworkとして扱えます。
-
-- ユーザーが全体確認・追加調査まで明示している。
-- 既存ロードマップに具体的なinspection taskとして含まれている。
-- direct-changeを安全に完了するためvalid required-propagationとして必要である。
-- confirmed Evidenceによりcurrent taskの成功判定へ追加確認が必要である。
-
-補助script・検査toolも同じscope ruleに従います。「今後便利」「保守性が上がる」「確認に役立つ」だけでは自動追加しません。
-
-ユーザーが現在の依頼で「完了まで進める」「ロードマップ通り継続」「残課題を順に処理」等を既に明示している場合も、上記条件を満たす当初scope内の安全な次batchへ進むためにだけchoiceを省略できます。
-
-## preparation-only batchの収束
-
-準備作業を `required-propagation` として継続する場合は `DEVELOPMENT_RULES.md` の準備作業収束ruleを適用します。
-
-batch decisionでは、必要に応じて次を短く明示します。
-
-- concrete execution target。
-- remaining required preparation。
-- execution-ready: `yes / no`。これはoverall completion stateや新しいenumではなく、次のexecution targetへ進むための局所判断です。
-- `no` の場合は、何が安全な実行 / required verification / required rollback・recoveryを妨げるかという具体的blocking Evidence。
-
-`execution-ready = yes` かつdirect-change本体がunfinishedなら、`continue` 自体は正しいですが、**concrete next batchは原則execution target本体**にします。
-
-この状態で別のpreparation-only batchをnext batchにする場合は、新しくconfirmedされた次のいずれかを理由として明示する必要があります。
-
-- execution failureを生む具体的blocker。
-- verification invalidation。
-- rollback / recovery failure。
-- contract / data safety failure。
-- required safety / verification / recovery conditionの変化。
-
-「より強いtestを追加できる」「semantic coverageを増やせる」「さらに安全余裕を増やせる」「準備Aをより安全にする準備Bがある」だけではpreparationを再開・継続しません。Preparation Bも最終的なconcrete execution targetへ必要因果が戻る場合だけrequired-propagationにできます。
-
-## ユーザー選択が必要な条件
-
-- 当初scopeを超える。
-- 新たなProduction Mutation・破壊的操作の個別authorizationが必要。
-- 高リスクProtocolへの切替でユーザー判断が必要。
-- 複数の実質的に異なる方針から選択が必要。
-- ユーザーが各batchで選択肢提示を希望している。
-- current scopeのrequired workが完了し、次に進むなら任意改善・exploratory work・別taskになる。
-
-## 表示ルール
-
-推奨する選択肢には `← 推奨` を付けます。
+表示時には、何を次に行うかを具体化します。
 
 例:
 
 ```text
-整備必要度: Medium
-今回scope: Complete
+整備必要度: medium
+今回scope: complete
+推奨: continue
+理由: current task scope内に未完了の責務分離が残る
+次batch: 保存処理の責務分離と回帰確認
+```
 
-[今回は終了] ← 推奨 — 当初scopeは完了。残る保守risk候補は別task
-[続ける] — current scopeへ追加したい具体的な対象がある場合のみ
+ユーザーから「完了まで進める」等の既存continuation authorizationがあり、新しいchoice / operation-specific authorizationが不要なら、`continue` と報告するだけで停止せず、その具体的next batchへ進みます。
+
+`continue` を単なる会話上のlabelとして繰り返し、実行可能なnext batchがあるのに説明だけで停止しません。
+
+## finish-for-now
+
+中央ruleでcurrent task scope内のrequired workが尽き、残りがoptional improvement / exploratory work / separate taskだけの場合に使用します。
+
+例:
+
+```text
+整備必要度: low
+今回scope: complete
+推奨: finish-for-now
+理由: current task scope内のrequired workは完了。残りは任意改善のみ
+```
+
+`finish-for-now` を出す場合は、可能な範囲で「current task scope内に未完了required workがない」と判断した根拠を短く示します。
+
+## prioritize-another-area
+
+ユーザーが現在の自動候補とは別の箇所を優先したい場合に使用します。
+
+例:
+
+```text
 [別の箇所を優先] — 気になる機能・UI・保存・公開周りなどを指定
 ```
 
-この例の `今回scope: Complete` はcurrent task scope全体がcompleteな場合です。直前batchだけがcompleteでcurrent taskに未完了workが残る場合は、`finish-for-now` の根拠に使用しません。
+対象をユーザーが指定していない場合、AIが勝手に別の整備対象を選びません。
 
-## 選択肢の意味
+## ユーザー選択を求める場合
 
-### 今回は終了
+中央rule上、次のようなuser choice / authorizationが必要なときだけ選択を求めます。
 
-現在状態、verified / blocked範囲、残タスク、次回再開位置を `docs/PROJECT_STATUS.md` に残して終了します。
+- current task scopeを超える。
+- 新しいProduction Mutation / destructive operationのauthorizationが必要。
+- 複数の実質的に異なる方針から選択が必要。
+- Major Change Planning等で方式選択が必要。
+- ユーザーが各batchで選択肢提示を希望している。
 
-maintenance needがmedium / highでも、current scopeがcompleteで残りがexploratory candidate / known issue / recommended improvement等だけなら、それだけを理由に `continue` を推奨しません。
+表示する場合、推奨案には `← 推奨` を付け、各選択肢で何が起きるかを短く説明します。
 
-safe / read-only / limitedな追加inspectionだけが候補として残る場合も、current scopeがcompleteなら原則 `finish-for-now` とし、必要ならoptional future workとして提示します。
+例:
 
-1つのbatch / execution targetがcompleteしただけでは `今回は終了` を推奨しません。current task scope全体のrequired workが尽きていることを先に確認します。
-
-### 続ける
-
-current task scope内に具体的な未完了direct-changeまたはvalid required-propagationが残る場合だけ推奨できます。
-
-表示時には、何を次に行う予定かを短く具体的に添えます。
-
-現在scopeがcompleteで、残りがknown issue / recommended improvement / exploratory inspection / optional refactor等だけなら、AIが勝手にそれを次batchへ選びません。
-
-準備が収束済みでdirect-change本体がunfinishedなら、次batchには準備の追加ではなくexecution target本体を示します。新しいconfirmed blockerがないのにpreparation-only workを連続next batch化しません。
-
-### 別の箇所を優先
-
-現在の自動候補ではなく、ユーザーが指定した箇所を次batch対象に切り替えます。表示時には `気になる機能・UI・保存・公開周りなどを指定` のように、何を指定すればよいか分かる説明を添えます。
-
-ユーザーが対象を指定せずこの選択肢だけを選んだ場合は、対象箇所だけを確認します。勝手に別の整備対象を選びません。
+```text
+[今回は終了] ← 推奨 — current task scopeのrequired workは完了
+[続ける] — current scopeへ追加したい具体的対象がある場合のみ
+[別の箇所を優先] — 気になる箇所を指定
+```
 
 ## 禁止
 
-- batch終了時のmaintenance need / scope completion / recommended action / reasonを省略する。
-- maintenance needを `low-medium`、`低〜中` 等の中間表現で報告する。
-- `continue` 推奨なのに具体的next batchを示さない。
-- 既に継続許可があることを理由にdecision reportingまで省略する。
-- maintenance needがmedium / highであることだけをcontinuation justificationに使う。
-- current scope外のknown issueを自動継続理由へ使う。
-- exploratory inspection、potential improvement、unconfirmed maintenance riskをunfinished in-scope workへ自動昇格する。
-- `read-only`、`限定確認`、`安全な範囲`、`confirmedなものだけ変更` 等の安全条件をcontinuation justificationへ使う。
-- continuation eligibilityを判定する前に「安全に実行できるから」を理由としてnext batch化する。
-- 「もっと調べる価値がある」だけで `continue` を推奨する。
-- 補助script・検査toolを便利さだけでcurrent scopeへ自動追加する。
-- execution-readyなのに、新しいblocking Evidenceなしで追加test / coverage / stagingだけのpreparation-only batchを継続する。
-- required preparation Aに役立つという理由だけでPreparation Bをrequired-propagationへ自動昇格する。
-- 直前batchのcompleteをcurrent task全体のcompleteへ自動昇格する。
-- 最新starterの直近差分だけを読み、元のuser intent / current task scope /既存continuation ruleを落として判断する。
-- `[続ける]` などlabelだけを並べ、何が起きるか説明しない。
-- 推奨理由を示さずに選択を求める。
-- `別の箇所を優先` をAI側の別候補選択として扱う。
+- batch decision reportingを省略する。
+- `continue` なのに具体的next batchを示さない。
+- continuation可能なのに、同じ判断説明だけを繰り返して実作業へ進まない。
+- `finish-for-now` の根拠を「直前batchがcomplete」だけにする。
+- maintenance needの高さだけで `continue` を表示する。
+- optional / exploratory workをrequired workのように表示する。
+- labelだけを並べ、各選択肢の意味を説明しない。
