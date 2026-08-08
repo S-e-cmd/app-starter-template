@@ -77,6 +77,31 @@
 - 無関係refactor / cleanupを混在させていない。
 - API / data contract / LocalStorage key / D1 schema / Sheets列 / Binding等を未許可で壊していない。
 - 無関係問題は別taskへ回した。
+- 通常の局所変更でrequired outcomeを安全に達成できないconfirmed Evidenceがある場合だけMajor Change Planningへ切り替えた。
+- file数 / line数 / UIとAPIを両方触る等の変更量だけでMajor Changeへ昇格していない。
+
+## Major Change Planning
+
+- `major-change-planning-required` を変更量ではなくcontract / architecture / transition impactで判定した。
+- 通常の局所的・段階的変更ではrequired outcomeを安全に達成できないことをconfirmed Evidenceで確認した。
+- inferred / unknownの段階では `possible major change` に留め、Major Change Requiredと断定していない。
+- fileが大きい、古い、modern化可能、templateと違う、全面整理すると綺麗、という理由だけでPlanningへ移していない。
+- `Major Change Planning Required ≠ rewrite authorized` を維持した。
+- Planningで保護対象 / 変更対象 / 変更しない対象 / contract impact / migration / environment / rollback / recoveryを整理した。
+- 現実的な移行方式を比較し、形式的に3案を作ること自体を目的にしていない。
+- 大規模再構成を「最も綺麗」「将来的に理想」という理由だけで推奨していない。
+- A/B等の段階案ではrequired outcomeを満たせない、または具体的risk・複雑性・migration負荷が増えるEvidenceがある場合だけ大規模再構成を候補にした。
+- Planning承認をMajor Change専用の包括authorizationとして扱っていない。
+- 方式承認だけで未列挙Production Mutation / destructive operationをauthorized扱いしていない。
+- exact fingerprint集合まで列挙・承認済みなら既存plan authorization ruleで重複確認を省いた。
+- code / migration / environment / cleanup / incident / dependencyを各既存Protocolへroutingした。
+- Major Change Planningが各Protocol固有のEvidence / authorization / verification条件を上書きしていない。
+- `major-change-planning-required` をoverall completion stateへ混ぜていない。
+- Planning complete / Implementation complete / Cleanup completeを分離した。
+- Planning completeだけでMajor Change全体をcompleteにしていない。
+- new system verifiedだけでold system deletion authorized / cleanup completeにしていない。
+- 旧系削除ではconsumer / migration完了 / rollback必要性 / 保持期間等をCleanup側で再確認した。
+- Major Change Planningを新しい過剰停止gateにしていない。
 
 ## 既存アプリ非破壊整備
 
@@ -94,6 +119,8 @@
 - scope complete後の追加inspectionをoptional future workとして分離した。
 - current scope外のknown issue / bug / recommended improvement / unrelated issueをcontinuation justificationへ使っていない。
 - known issueがconfirmedでも、それだけでcurrent task scopeへ昇格させていない。
+- Major Change Planningが必要とconfirmedされた場合、整備の延長として大規模実装へ直行していない。
+- Major Change候補の必要性確認がscope外なら、それ自体を新しいexploratory continuation理由にしていない。
 - README / docsの古い記述を、current stateを誤認させるrequired fixか、単なる過去計画・将来メモ等のoptional noteかに分類した。
 - current architecture / public method / storage / API / handoff情報を誤って説明するREADME / docsを、今回scope内ならdocumentation direct-changeとして扱った。
 - 単なる将来メモや利便性リンク追加だけでcurrent scopeを広げたり `continue` を推奨したりしていない。
@@ -203,6 +230,8 @@ hold伝播が必要なのは、後続作業がblocked inputを直接使用する
 - partial verificationを未確認の目的状態へ一般化していない。
 - required documentation writeがblockedなら、変更未完了として `incomplete` にした。
 - required writeが完了し検証だけblockedの場合と、write自体がblockedの場合を区別した。
+- `major-change-planning-required` を `complete / work-complete-verification-pending / incomplete` の代替値にしていない。
+- Major Change Planning completeとMajor Change全体completeを混同していない。
 
 全体状態:
 
@@ -220,6 +249,7 @@ hold伝播が必要なのは、後続作業がblocked inputを直接使用する
 - manifestへ自然言語Protocolを過剰に詰め込んでいない。
 - 同じruleを確認するだけのcaseを無制限に追加していない。
 - 重大な抜け道がなければ、rule追加より重複整理・実app適用・過剰停止確認を優先した。
+- Major Change Planningを「変更が大きそう」という曖昧な理由で常用し、新しい過剰停止gateにしていない。
 
 ## 解釈一致テスト
 
@@ -239,5 +269,7 @@ hold伝播が必要なのは、後続作業がblocked inputを直接使用する
 - independent resource creation riskと既承認Creation Flow。
 - schema version drift。
 - silent fallback / fake success / partial verification。
+- Major Changeの過剰昇格 / 過小判定。
+- Major Change Planningとauthorization / completion / cleanupの境界。
 
 同じcaseで別AIのscope、Evidence、authorization、Production Mutation、continuation、completion、Protocolが大きく割れる場合は、rule不足または表現曖昧として扱います。
