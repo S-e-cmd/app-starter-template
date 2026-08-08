@@ -711,6 +711,45 @@ Expected:
 - Feature Change内で通常実装可能。
 - Major Change gateを変更規模・複数領域という理由で常用しない。
 
+## Case 51: required preparationが追加保証へ増殖する
+
+User intent:
+- `index.html` のinline処理を既に準備済みmoduleへ実切替する。
+
+State:
+- concrete execution targetは明確。
+- contract test、parity確認、必要なrollback条件は成立済み。
+- current Evidence上、安全な実行・required verification・必要回復を妨げるblockerは残っていない。
+- さらにsemantic coverageを増やすtestは作成可能だが、それがないとexecution / verification / recoveryが成立しないEvidenceはない。
+
+AI proposal:
+- 「より安全にするため、もう1本semantic testを追加してから切替する」。
+
+Expected:
+- 追加testはadditional assuranceでありrequired-propagationではない。
+- preparationは収束済み。
+- execution-readyはyes。
+- direct-change本体がunfinishedなので `continue` は可能だが、concrete next batchはexecution target本体。
+- Preparation Aに役立つという理由だけで追加Preparation Bをrequiredへ昇格しない。
+
+## Case 52: execution-ready後に新しいconfirmed blockerが出る
+
+User intent:
+- 準備済みmigration / runtime切替を実行する。
+
+Initial state:
+- required safety / verification / recovery conditionsは成立し、execution-readyと判断済み。
+
+New Evidence:
+- 実行直前確認でmigration scriptにconfirmedな構文エラーがあり、そのままではexecution不能。
+- または切替後正常状態をverification scriptが必ずfail扱いすることがconfirmed。
+
+Expected:
+- preparationを再開できる。
+- blocker修正はconcrete execution targetの安全な実行またはrequired verificationに必要なrequired-propagation。
+- 修正後にrequired conditionを再確認する。
+- 再びexecution-readyになったら、追加の安心材料を理由に準備を延長せずexecution targetへ戻る。
+
 ## 判定の合格基準
 
 別AIが同じcaseを読んだ場合、文言完全一致は不要ですが、少なくとも次が一致することを期待します。
@@ -724,6 +763,7 @@ Expected:
 - direct-changeから導出したoutcome別完了条件。
 - applicable Protocol。
 - schemaVersionの意味とversion drift区分。
+- preparationの収束と正当な再開。
 - Major Change Planningの要否と、Planning / implementation / cleanupの境界。
 
 異なる結論が合理的に成立するcaseが見つかった場合は、そのcaseをrule不足または表現曖昧のEvidenceとして扱います。ただし、既存ruleで判定可能なら新ruleを増やさず、説明・代表caseの改善を優先します。
