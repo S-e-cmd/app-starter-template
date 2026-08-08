@@ -16,6 +16,18 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 
 整備必要度は4値から1つだけ選びます。`low-medium` 等の中間値は使いません。
 
+### 次候補を出しただけではbatch decisionは完了しない
+
+「次の優先候補」「次に見るとよい箇所」「別batchに分けるのが安全」等の候補を提示した場合でも、**その候補がcurrent task scope内の具体的なunfinished workとしてcontinuation eligibilityを満たすかを中央ruleで判定し、必ず `continue / finish-for-now / prioritize-another-area` のいずれかへ着地させます。**
+
+候補を挙げたまま、required workかoptional candidateかを判定せず停止しません。
+
+- current task scope内の具体的unfinished `direct-change` / valid `required-propagation` と確認できる → `continue`。
+- 現時点では改善候補・exploratory candidate・optional workに留まる → `finish-for-now` を検討する。
+- ユーザーが別対象を優先する意思決定を明示的に必要としている → `prioritize-another-area`。
+
+`continue` と判定し、既存continuation authorizationが適用でき、新しいchoice / operation-specific authorizationが不要なら、次候補の説明だけで止まらず具体的next batchへ進みます。
+
 ## continue
 
 中央ruleでcontinuation eligibilityが成立した場合に使用します。
@@ -130,6 +142,8 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 ## 禁止
 
 - batch decision reportingを省略する。
+- 次候補を提示しただけで、`continue / finish-for-now / prioritize-another-area` の判定を省略する。
+- 次候補がrequired workかoptional candidateかを曖昧にしたまま停止する。
 - `continue` なのに具体的next batchを示さない。
 - continuation可能なのに、同じ判断説明だけを繰り返して実作業へ進まない。
 - `finish-for-now` の根拠を「直前batchがcomplete」だけにする。
