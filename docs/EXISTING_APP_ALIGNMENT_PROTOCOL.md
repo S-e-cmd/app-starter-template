@@ -254,6 +254,22 @@ exploratory inspection自体は禁止しません。次のいずれかでcurrent
 - `docs/UI_RULES.md`
 - `docs/PROJECT_STATUS.md`
 
+### Major Change時のアプリ固有handoff
+
+`app-starter-template` に準じた既存アプリ整備では、将来そのアプリで大きな改修が必要になった際に、アプリ単体のhandoffから安全な入口を判断できるようにします。共通のMajor Change手順を各repositoryへ複製せず、**parent starterの `docs/MAJOR_CHANGE_PLANNING.md` を正本として参照し、アプリ固有情報だけを自己引き継ぎ情報へ残します。**
+
+最低限、`ai-context.json`、`llms.txt`、`docs/PROJECT_STATUS.md`、または内容に最も適した既存handoff文書へ、次を確認・記録します。
+
+- 大規模変更時はparent starterの `MAJOR_CHANGE_PLANNING.md` / `PROTOCOL_ROUTING_RULES.md` を再確認してから実装方式を決めること。
+- 現在の保護対象。例: data contract、storage key / schema、API contract、auth、public URL / routing、主要UI挙動、外部consumer、deployment方式。
+- そのアプリでMajor Change候補になり得る**アプリ固有の境界**。例: storage backend切替、auth方式切替、breaking API / data model変更、public routing切替等。確認できない境界を推測で作らない。
+- 大規模変更でも勝手に変更・削除してはいけない既存契約や互換条件。
+- 既存roadmap、migration plan、transition plan、rollback plan等が実在する場合はその参照先。
+
+この記録は「将来Major Changeを実施する」ことのauthorizationではありません。また、候補境界を列挙しただけで `major-change-planning-required` と判定しません。実際の変更時はparent starterの最新ruleとcurrent Evidenceで再判定します。
+
+アプリ固有handoffへ共通Protocol全文をコピーしません。parent starter更新で手順がdriftしないよう、**共通のやり方はstarter参照、各アプリには現在の契約・保護対象・固有境界だけを保持する**ことを原則とします。
+
 既存アプリに `ai-context.json` がないことだけを理由に、新規アプリとして再bootstrapしません。
 
 ## 完了判定
