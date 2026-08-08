@@ -94,6 +94,12 @@
 - scope complete後の追加inspectionをoptional future workとして分離した。
 - current scope外のknown issue / bug / recommended improvement / unrelated issueをcontinuation justificationへ使っていない。
 - known issueがconfirmedでも、それだけでcurrent task scopeへ昇格させていない。
+- README / docsの古い記述を、current stateを誤認させるrequired fixか、単なる過去計画・将来メモ等のoptional noteかに分類した。
+- current architecture / public method / storage / API / handoff情報を誤って説明するREADME / docsを、今回scope内ならdocumentation direct-changeとして扱った。
+- 単なる将来メモや利便性リンク追加だけでcurrent scopeを広げたり `continue` を推奨したりしていない。
+- required documentation writeがblockedなのにscopeを `complete` としていない。
+- required documentation writeのblockedをverification pendingと誤分類していない。
+- optional documentation writeがblockedした場合は、optionalである理由を明示し、required outcomeの未完了と混同していない。
 
 ## concurrency / stale SHA
 
@@ -195,12 +201,14 @@ hold伝播が必要なのは、後続作業がblocked inputを直接使用する
 - sync修正なら保存成功だけで完了にせず、sync目的状態まで確認した。
 - blockedの場合、理由・代替確認・residual riskを記録した。
 - partial verificationを未確認の目的状態へ一般化していない。
+- required documentation writeがblockedなら、変更未完了として `incomplete` にした。
+- required writeが完了し検証だけblockedの場合と、write自体がblockedの場合を区別した。
 
 全体状態:
 
 - **完了** — direct-changeから導出した全required outcomeの必要変更と検証が完了。
 - **作業完了 / 検証保留** — 変更は完了したがrequired outcomeの必要検証の一部blocked。
-- **未完了** — 実装・復旧・移行・設定変更そのものに残作業がある。
+- **未完了** — 実装・復旧・移行・設定変更・required documentation writeそのものに残作業がある。
 
 ## rule complexity / 収束確認
 
