@@ -4,6 +4,8 @@
 
 continuation eligibility、maintenance needとの分離、preparation convergence、batch completion / current task completion、scope、Evidence、authorization、completion stateの意味は `docs/PROTOCOL_ROUTING_RULES.md` を正本とします。この文書では再定義しません。
 
+既存アプリ整備では `docs/EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` も初回batchから適用します。
+
 ## 毎batchの報告
 
 ユーザーへ選択肢を出す必要がない場合でも、batch終了時には最低限次を報告します。
@@ -15,6 +17,30 @@ continuation eligibility、maintenance needとの分離、preparation convergenc
 - `continue` の場合のみ、次に扱う具体的batch。
 
 整備必要度は4値から1つだけ選びます。`low-medium` 等の中間値は使いません。
+
+### 初回batchも省略しない
+
+既存アプリ整備では、最初の変更・整理を行ったturnから通常batch報告を適用します。「初回だから概要だけ」「まず整備しました」等の自由形式で終了しません。
+
+最低限、ユーザーが次を判断できる情報を含めます。
+
+1. 今回実施した具体的変更。
+2. required verificationと結果。
+3. 未完了required workの具体的item、または `なし`。
+4. 推奨判断と理由。
+5. `continue` の場合のみ具体的next batch。
+6. Build: 更新後build / 更新不要とその理由 / blockedとその理由。
+7. Commit / PR等、利用可能な識別情報。
+
+`continue` を選ぶ場合、未完了itemの名前または責務と、それがcurrent scope内のdirect-change / valid required-propagationである理由を具体的に示します。「さらに整理可能」「責務分離可能」「追加確認可能」だけでは不足です。
+
+### build情報は報告上も必須
+
+今回batchにruntime / UI asset / user-visible static config / API behavior等の変更が含まれ、build policyに該当する場合、build更新・確認前に `complete` を報告しません。
+
+build policyに該当しない場合も、既存アプリ整備の初回報告では `Build: 更新不要` と理由を短く示し、単に項目を落としません。
+
+build位置が不明な場合は「不明なので省略」ではなく、current app内を確認します。build概念が存在しない、またはapp固有policyで不要とconfirmedできた場合のみ更新不要とします。
 
 ### ユーザー向け報告は結果を優先する
 
@@ -74,6 +100,8 @@ Commit: abcdef...
 次batch: 保存処理の責務分離と回帰確認
 ```
 
+ただし「責務分離できる箇所がある」だけでは上記理由になりません。具体的なunfinished責務がcurrent scope内である必要があります。
+
 ユーザーから「完了まで進める」等の既存continuation authorizationがあり、新しいchoice / operation-specific authorizationが不要なら、`continue` と報告するだけで停止せず、その具体的next batchへ進みます。
 
 `continue` を単なる会話上のlabelとして繰り返し、実行可能なnext batchがあるのに説明だけで停止しません。
@@ -108,6 +136,7 @@ continuation eligibilityが成立しているなら、この報告に続けて�
 - repository内で実行できる `npm test` / `npm run build` / lint / typecheck。
 - 変更したmoduleを対象にした既存contract test。
 - 現在利用可能なPreview / local runtimeでの必須確認。
+- build policy該当時のbuild更新・source確認。
 
 これらは「次にやる確認候補」ではなく、current batchのrequired verificationとして先に実行します。
 
@@ -129,6 +158,8 @@ continuation eligibilityが成立しているなら、この報告に続けて�
 ```
 
 `finish-for-now` を出す場合は、可能な範囲で「current task scope内に未完了required workがない」と判断した根拠を短く示します。
+
+「さらに整理可能」「責務分離候補がある」「別の改善点が見つかった」場合でも、それらがoptionalなら `finish-for-now` を妨げません。
 
 ## prioritize-another-area
 
@@ -209,10 +240,16 @@ continuation eligibilityが成立しているなら、この報告に続けて�
 ## 禁止
 
 - batch decision reportingを省略する。
+- 初回batchだけ自由形式にしてrequired report項目を落とす。
+- build情報を報告から省略する。
+- build policy該当変更があるのに、build更新・確認前に `complete` とする。
+- build場所が不明というだけでbuild確認を打ち切る。
 - ユーザー向け報告をstarter rule名・state名・自己弁明中心にする。
 - 作業結果より先に、ruleへ従った経緯や判断過程を長く説明する。
 - 次候補を提示しただけで、`continue / finish-for-now / prioritize-another-area` の判定を省略する。
 - 次候補がrequired workかoptional candidateかを曖昧にしたまま停止する。
+- 「さらに整理可能」「責務分離可能」「追加確認可能」だけを `continue` の理由にする。
+- `continue` なのに具体的unfinished itemとscope内理由を示さない。
 - `continue` なのに具体的next batchを示さない。
 - continuation可能なのに、同じ判断説明だけを繰り返して実作業へ進まない。
 - 前回の不適切な停止を自己訂正しただけで、continuation eligibilityが成立しているのに再び停止する。
