@@ -13,7 +13,7 @@ starterを使う作業では、READMEだけ、または中央ruleだけを読ん
 3. `docs/DEVELOPMENT_RULES.md` — code変更を行う場合の実装・検証方法を確認する。
 4. `docs/BATCH_COMPLETION_CHOICES.md` — batch終了時のユーザー向け報告と、continue / finish / user decision時のinteractionを確認する。
 
-**既存アプリ全体の整理・安定化・引き継ぎ改善では、`PROTOCOL_ROUTING_RULES.md` → `EXISTING_APP_ALIGNMENT_PROTOCOL.md` → 必要に応じ `DEVELOPMENT_RULES.md` → `BATCH_COMPLETION_CHOICES.md` までを初回batchから適用します。** handoff文書の追加・更新だけでcurrent task全体を完了扱いにせず、Existing App Alignmentのrequired outcomeとbatch completion手順まで確認してから終了判断します。
+**既存アプリ全体の整理・安定化・引き継ぎ改善では、`PROTOCOL_ROUTING_RULES.md` → `EXISTING_APP_ALIGNMENT_PROTOCOL.md` → `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` → 必要に応じ `DEVELOPMENT_RULES.md` → `BATCH_COMPLETION_CHOICES.md` までを初回batchから適用します。** `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` は「整備して」のdefault scope、continue可能条件、初回報告、build hard gateを強制します。handoff文書の追加・更新だけでcurrent task全体を完了扱いにせず、また「さらに整理可能」という理由だけでcurrent taskを継続しません。
 
 作業開始時は、まずユーザーの現在目的から主作業モードを決め、scope / Evidence / authorization / Production Mutation / continuation / completionを中央ruleで判定します。
 
@@ -24,6 +24,7 @@ Repository URL、公開URL、starter参照があること自体は作業モー�
 - `manifest.json` — 機械判定しやすい状態・列挙値・参照先。
 - `docs/PROTOCOL_ROUTING_RULES.md` — cross-cuttingな判断ruleの正本。
 - 各Protocol — その作業モード固有の手順・確認対象・required outcome。
+- `docs/EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` — 既存アプリ整備時のdefault scope、continue制限、初回報告、build completion gate。
 - `docs/DEVELOPMENT_RULES.md` — 実装時の作法。
 - `docs/BATCH_COMPLETION_CHOICES.md` — batch判断の表示・ユーザーinteraction。
 - `docs/TEMPLATE_CHECKLIST.md` — 正本ruleの適用漏れを検査するvalidation layer。
@@ -35,7 +36,7 @@ ChecklistやInterpretation Casesだけで新しい判断ruleを定義しませ�
 
 - 新規作成 → `docs/CREATE_AND_DEPLOY_FLOW.md` / `docs/BOOTSTRAP_PROTOCOL.md`
 - 通常の機能追加・仕様変更・UI改善 → `docs/FEATURE_CHANGE_PROTOCOL.md`
-- 既存アプリ全体の整理・安定化・引き継ぎ改善 → `docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md`
+- 既存アプリ全体の整理・安定化・引き継ぎ改善 → `docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md` + `docs/EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md`
 - 障害・主要機能停止 → `docs/INCIDENT_RECOVERY_PROTOCOL.md`
 
 必要に応じて中央routing ruleから次へ切り替えます。
