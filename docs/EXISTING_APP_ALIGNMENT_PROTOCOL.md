@@ -22,6 +22,20 @@ scope、Evidence、required-propagation、continuation、preparation convergence
 
 templateとの一致そのものは完了条件ではありません。
 
+## 整備依頼の実行ゲート
+
+一般的な「整備して」「整理して」「starterを参考に整備して」等の依頼では、初回batchから `docs/EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` を必須適用します。
+
+このgateにより、少なくとも次を固定します。
+
+- 一般的な整備依頼のdefault scope。
+- 「さらに整理可能」と「current taskを継続すべき」を分離すること。
+- `continue` に具体的unfinished itemを要求すること。
+- 初回batchから報告項目を省略しないこと。
+- build policy該当時にbuild更新・確認をcompletion hard gateとすること。
+
+`EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` は中央ruleを上書きせず、既存アプリ整備での誤適用を防ぐ実行gateです。
+
 ## 既存アプリで保護するもの
 
 current scopeに応じ、少なくとも次のうち実際に存在するものを保護対象として確認します。
@@ -60,6 +74,8 @@ current scopeに必要な範囲で次を確認します。
 
 文書と実装・runtimeが食い違う場合の扱いは中央ruleに従います。
 
+一般的な整備依頼では、この確認結果から `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` のdefault scopeを確定し、単なる改善余地をunfinished workへ自動追加しません。
+
 ## README / docsの鮮度
 
 古い記述を次へ分類します。
@@ -78,15 +94,18 @@ required documentation fixはcurrent scopeに含まれる場合に修正しま�
 5. 将来候補は記録し、current taskへ自動追加しない。
 6. 削除が必要なら `CLEANUP_DELETION_PROTOCOL.md` へroutingする。
 
+「さらに分割できる」「もっと整理できる」「追加確認できる」は5の将来候補であり、それだけでは4のunfinished workになりません。
+
 ## 1batchの標準手順
 
 1. 今回扱う具体的対象を決める。
 2. current implementationと保護対象を確認する。
 3. 必要最小限の整備を実施する。
 4. `DEVELOPMENT_RULES.md` と中央verification ruleで確認する。
-5. `docs/PROJECT_STATUS.md` にcurrent state、今回変更、verified / blocked、残taskを反映する。
-6. 中央ruleでbatch completion、current task completion、continuation eligibilityを判定する。
-7. `BATCH_COMPLETION_CHOICES.md` の形式でdecisionを報告し、継続可能なら具体的next batchへ進む。
+5. build policy該当時はbuild更新・確認を完了する。未完了ならcompleteにしない。
+6. `docs/PROJECT_STATUS.md` にcurrent state、今回変更、verified / blocked、残taskを反映する。
+7. 中央ruleと `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` でbatch completion、current task completion、continuation eligibilityを判定する。
+8. `BATCH_COMPLETION_CHOICES.md` の形式で初回batchからdecisionを報告し、継続可能なら具体的next batchへ進む。
 
 不具合修正と無関係な大規模refactorを同じbatchへ混在させません。
 
