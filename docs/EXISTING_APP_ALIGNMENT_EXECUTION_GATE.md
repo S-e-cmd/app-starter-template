@@ -45,7 +45,7 @@
 - 「次に見るべき候補がある」。
 - maintenance need が high / medium である。
 
-発見した候補がoptional / exploratory / out-of-scopeなら、current scopeが完了している限り `finish-for-now` を選びます。
+発見した候補がoptional / exploratory / out-of-scopeなら、current scopeが完了している限り `finish` を選びます。
 
 ### continueに必要な根拠
 
@@ -56,44 +56,20 @@
 
 「コード整理」「責務分離」「追加確認」等の抽象語だけでは不足です。
 
-## 3. 初回batchから報告形式を固定する
+## 3. 初回batchから通常報告を適用する
 
-初回batchだけ自由形式にしません。既存アプリ整備では**最初の変更を行ったturnから**、最低限次をユーザーへ報告します。
+初回batchだけ自由形式にしません。最初の変更を行ったturnから `docs/BATCH_COMPLETION_CHOICES.md` の報告形式を適用し、最低限次を区別できる情報を示します。
 
-```text
-今回の整備
-- 実施した具体的変更
+- 今回の変更。
+- 原因・変更根拠。
+- required verificationと結果。
+- Build、Commit、公開反映。
+- complete / verification-pending / incomplete。
+- 必須の残作業、またはなし。
+- continue / finish / user-decision。
+- continueの場合だけ具体的next action。
 
-確認
-- 実施したrequired verificationと結果
-
-未完了required work
-- 具体的item / なし
-
-推奨
-- continue / finish-for-now / prioritize-another-area
-
-理由
-- 上記判断の具体的理由
-
-次batch
-- continueの場合のみ具体的対象
-
-Build
-- 更新後build / 更新不要（理由） / blocked（理由）
-
-Commit / PR
-- 利用可能な識別情報
-```
-
-項目名を一字一句固定する必要はありませんが、意味する情報を省略してはいけません。
-
-特に以下を禁止します。
-
-- 初回だけ「整理しました」「まだ整理可能です」等の自由文で終了する。
-- build情報を報告から落とす。
-- `continue` なのに具体的unfinished itemを示さない。
-- optional candidateを残taskとして表示する。
+項目名の文字列ではなく、反映経路、必須作業と任意候補、継続・終了判断をユーザーが識別できることをhard gateとします。Build、Commit、公開反映を混同または省略しません。
 
 ## 4. Buildはcompletion hard gate
 
@@ -142,7 +118,7 @@ batch終了時は、次の順で判定します。
 5. current handoffのrequired updateは完了したか。
 6. 残っているものはrequired workか、optional candidateか。
 7. required workが残る場合のみ `continue`。
-8. required workがなく、残りがoptionalなら `finish-for-now`。
+8. required workがなく、残りがoptionalなら `finish`。
 
 maintenance needや改善余地の大きさを、この順序より先に置きません。
 
@@ -156,7 +132,7 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 - entry fileにはさらに分割可能な箇所があるが、現在のrequired outcomeを妨げていない。
 
 正解:
-- `finish-for-now`
+- `finish`
 
 誤り:
 - 「さらに責務分離可能なのでcontinue」
@@ -193,7 +169,7 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 - 調査中に別機能の改善候補を発見した。
 
 正解:
-- optional candidateとして記録。`finish-for-now`。
+- optional candidateとして記録。`finish`。
 
 誤り:
 - 発見したこと自体を理由にcurrent taskへ追加してcontinue。
