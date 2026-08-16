@@ -1,5 +1,9 @@
 # Template Validation Checklist
 
+通常作業は `START_HERE.md` から開始し、`create-new / align-existing / transform-existing` の1つを選択した。該当しない全Protocolや全Interpretation Casesを機械的に事前読了していない。
+
+報告ではBuild、Commit、公開反映を分離し、current taskの状態、必須残作業、continue / finish / user-decisionを示した。continueは具体的な必須残作業があり、そのまま実行可能なら説明だけで停止せず実行した。optional候補だけならfinishとした。
+
 新規作成、通常更新、既存アプリ整備、高リスク変更で、`docs/PROTOCOL_ROUTING_RULES.md` と `manifest.json` の中央判断を実際の作業へ適用できているか確認するためのチェックリストです。
 
 ## 共通ゲート

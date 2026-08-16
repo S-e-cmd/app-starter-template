@@ -1,50 +1,22 @@
 # Protocol Routing Rules
 
-この文書は複数Protocolが同時に該当し得る場合の中央判断ルールです。個別Protocolへ入る前に、主目的、scope、Evidence、authorization、高リスク条件、検証可能性を判定します。
+通常作業は `START_HERE.md` から開始します。この文書は複数Protocolが同時に該当し得る場合のscope、Evidence、authorization、高リスク条件、継続、完了の詳細な中央判断ルールです。個別Protocolへ入る前に、主目的、scope、Evidence、authorization、高リスク条件、検証可能性を判定します。
 
 `manifest.json` は機械判定しやすい条件・状態・参照先、本文書は意味・例外・境界、各Protocolは作業モード固有の実施手順、`POLICY_INTERPRETATION_CASES.md` は解釈一致テストを担当します。中央ruleを個別Protocolへ再定義しません。
 
-## 1. 主作業モード
+## 1. 3つの主作業モード
 
-Repository URL、公開URL、starter参照の存在ではなく、ユーザーの現在目的で決めます。
+Repository URL、公開URL、starter参照の存在ではなく、ユーザーのcurrent outcomeとcontract transitionで決めます。
 
-- 新規アプリ → `CREATE_AND_DEPLOY_FLOW.md` / `BOOTSTRAP_PROTOCOL.md`
-- 機能追加・仕様変更・UI改善・限定的不具合修正 → `FEATURE_CHANGE_PROTOCOL.md`
-- 既存アプリ全体の整理・安定化・引き継ぎ改善 → `EXISTING_APP_ALIGNMENT_PROTOCOL.md`
-- 正常稼働していたアプリや主要機能の障害 → `INCIDENT_RECOVERY_PROTOCOL.md`
+- `create-new` — 新しいアプリを作成する。主に `CREATE_AND_DEPLOY_FLOW.md` / `BOOTSTRAP_PROTOCOL.md`。
+- `align-existing` — current contractを基本的に維持し、不具合修正、機能追加、UI改善、限定的・全体的な安全整備を行う。主に `FEATURE_CHANGE_PROTOCOL.md`、全体整備では `EXISTING_APP_ALIGNMENT_PROTOCOL.md` / `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md`。
+- `transform-existing` — architecture、storage、auth、data structure、API contract、主要責務またはproduction切替経路を計画的に変更する。まず `MAJOR_CHANGE_PLANNING.md`、実operationは影響部分のProtocolへroutingする。
 
-通常のFeature Change / Existing App Alignmentでrequired outcomeを安全に達成できず、architecture / contract / transition設計が必要だとconfirmedできた場合は、実装へ直行せず `MAJOR_CHANGE_PLANNING.md` をplanning / routing gateとして挟みます。
+file数、変更行数、codeの長さ、整理範囲、templateとの差、新しい設計が存在することだけではtransform-existingにしません。大規模変更の必要性がunknown / inferredならalign-existingのread-only調査から始め、current contract内の局所変更では安全に目的達成できないことがconfirmedになった時点でtransform-existingへ切り替えます。
 
-### Major Change Planning gate
+transform-existingでは planning / implementation / migration / cutover / verification / cleanupを分離します。Planning completeを全体completeにせず、方式選択を未列挙Production Mutationのauthorizationへ拡張せず、新系verifiedを旧系削除authorizationへ拡張しません。
 
-Major Changeは変更量ではなく、**contract / architecture / transition impact**で判定します。
-
-原則として、通常の局所的・段階的変更だけではrequired outcomeを安全に達成できないことをconfirmed Evidenceで確認した場合に `major-change-planning-required` とします。
-
-候補例:
-
-- 局所修正ではrequired outcomeを満たせない。
-- 現在architecture上の制約が目的達成を直接妨げている。
-- API / storage / UI / deployment等のcontract変更が不可避。
-- 旧実装との互換維持にmigration / transition設計が必要。
-- 複数moduleをまたぐ変更を一体として扱わなければ整合性を保てない。
-
-次だけではMajor Changeへ昇格しません。
-
-- file / line / 変更量が多い。
-- UIとAPIの両方を触る。
-- 古い構成、modern化可能、templateと違う。
-- 分割・全面整理すると綺麗になる。
-
-Evidenceがinferred / unknownならMajor Change Requiredとは確定しません。必要性判断の確認自体がcurrent scopeに含まれる場合だけread-only確認し、confirmed後にPlanningへ移します。
-
-**possible major change ≠ major change required**
-
-**Major Change Planning Required ≠ rewrite authorized**
-
-Planningは方式・影響・migration・rollback・実装batchとrouting先を整理するところまでです。実operationはFeature Change / Data Migration / Environment Change / Cleanup / Incident Recovery / Dependency Update等へroutingし、各ProtocolのEvidence・authorization・verificationをそのまま適用します。
-
-`major-change-planning-required` はrouting / planning状態であり、`complete / work-complete-verification-pending / incomplete` のoverall completion stateへ混ぜません。
+障害・security containment、data migration、environment change、dependency update、cleanup等の高リスクProtocolは、主作業モードを置き換える包括modeではなく、影響部分へ追加適用します。
 
 ## 2. scopeを3区分する
 
