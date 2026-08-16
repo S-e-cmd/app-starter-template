@@ -84,7 +84,13 @@ file数、変更行数、codeの長さ、templateとの差、より新しい設�
 - 新しいuser choiceやoperation-specific authorizationが不要
 - 必要なtoolと情報が利用可能
 
-停止できるのは、user choice、Production Mutation・destructive operationの承認、必要情報・権限不足、原因・変更対象未確定、回復困難なrisk、未確定contract等がある場合です。blockedな部分に依存しないscope内作業は継続します。
+停止できるのは、user choice、未承認の高リスクProduction Mutation・destructive operation、必要情報・権限不足、原因・変更対象未確定、回復困難なrisk、未確定contract等がある場合です。blockedな部分に依存しないscope内作業は継続します。
+
+### 通常の反映までを作業に含める
+
+ユーザーが特定repository / appのcode作成・修正・整備を依頼した場合、依頼された変更をcommitするだけでなく、既存の通常経路によるmain反映とdeployment、反映後verificationまでをcurrent taskに含めます。安全性とrequired verificationに問題がなく、既存経路が判明しており、追加の実質的選択を必要としないなら、Draft PR作成や「本番反映してよいか」という確認で停止しません。
+
+この通常反映authorizationは、依頼対象repository / app、今回の変更差分、既存のmain / deployment経路に限定します。production data・schema・Secret・Binding・権限・domain・外部公開範囲の変更、resource作成・削除、破壊的操作、既存経路の変更は含みません。ユーザーがPR止まり、未公開、確認後反映等を指定した場合はその指示を優先します。
 
 ## 6. 検証と完了
 
