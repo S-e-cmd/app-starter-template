@@ -1,59 +1,53 @@
 # App Starter Template
 
-新規アプリを保守しやすく立ち上げ、既存アプリを壊さず更新・整備・復旧するためのAI向けstarterです。
+新規アプリの作成、既存アプリの安全な整備、大規模整備を、安全かつ確実に完了まで進めるためのAI向けstarterです。
 
 ## 最初に読むもの
 
-判断ruleの正本は `docs/PROTOCOL_ROUTING_RULES.md` です。
+**最初に [START_HERE.md](START_HERE.md) を読みます。**
 
-starterを使う作業では、READMEだけ、または中央ruleだけを読んで実行・完了報告へ進みません。**作業開始時に、少なくとも次の順で現在taskに必要な文書まで確認します。**
+START_HEREは、current outcome、3つのwork mode、変更前調査、scope、安全停止、検証、継続・終了、報告を通常作業に必要な量へ集約した入口です。READMEだけで実装を始めず、該当しない全Protocolを開始時に読みません。
 
-1. `docs/PROTOCOL_ROUTING_RULES.md` — current user intentから主作業モード、scope、Evidence、authorization、continuation、completionを判定する。
-2. 選択した主Protocol — その作業モード固有のrequired outcomeと実施順を確認する。
-3. `docs/DEVELOPMENT_RULES.md` — code変更を行う場合の実装・検証方法を確認する。
-4. `docs/BATCH_COMPLETION_CHOICES.md` — batch終了時のユーザー向け報告と、continue / finish / user decision時のinteractionを確認する。
+## 3つのwork mode
 
-**既存アプリ全体の整理・安定化・引き継ぎ改善では、`PROTOCOL_ROUTING_RULES.md` → `EXISTING_APP_ALIGNMENT_PROTOCOL.md` → `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` → 必要に応じ `DEVELOPMENT_RULES.md` → `BATCH_COMPLETION_CHOICES.md` までを初回batchから適用します。** `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` は「整備して」のdefault scope、continue可能条件、初回報告、build hard gateを強制します。handoff文書の追加・更新だけでcurrent task全体を完了扱いにせず、また「さらに整理可能」という理由だけでcurrent taskを継続しません。
+- `create-new` — 新規アプリを作成する。
+- `align-existing` — current contractを基本的に維持し、不具合修正、機能追加、UI改善、code整理、安定化を行う。
+- `transform-existing` — architecture、storage、auth、data、API contract、主要責務またはproduction切替経路を計画的に変更する。
 
-作業開始時は、まずユーザーの現在目的から主作業モードを決め、scope / Evidence / authorization / Production Mutation / continuation / completionを中央ruleで判定します。
-
-Repository URL、公開URL、starter参照があること自体は作業モードの選択理由にしません。
+選択基準と進行順はSTART_HEREを正本とします。file数、変更行数、codeの長さ、templateとの差だけでtransform-existingを選びません。
 
 ## 文書の役割
 
-- `manifest.json` — 機械判定しやすい状態・列挙値・参照先。
-- `docs/PROTOCOL_ROUTING_RULES.md` — cross-cuttingな判断ruleの正本。
-- 各Protocol — その作業モード固有の手順・確認対象・required outcome。
-- `docs/EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` — 既存アプリ整備時のdefault scope、continue制限、初回報告、build completion gate。
-- `docs/DEVELOPMENT_RULES.md` — 実装時の作法。
-- `docs/BATCH_COMPLETION_CHOICES.md` — batch判断の表示・ユーザーinteraction。
-- `docs/TEMPLATE_CHECKLIST.md` — 正本ruleの適用漏れを検査するvalidation layer。
-- `docs/POLICY_INTERPRETATION_CASES.md` — 正本ruleから同じ判定を導けるか確認するadversarial test layer。
+- `START_HERE.md` — 通常作業の強制入口と3モードの基本進行。
+- `manifest.json` — 機械判定する列挙値・参照先。
+- `docs/PROTOCOL_ROUTING_RULES.md` — scope、Evidence、authorization、高リスク条件、継続、完了の詳細な正本。
+- 各Protocol — 該当する作業・高リスク条件固有の手順。
+- `docs/DEVELOPMENT_RULES.md` — 処理経路確認、実装、検証の作法。
+- `docs/BATCH_COMPLETION_CHOICES.md` — Build、Commit、公開反映、必須残作業、次の判断を含む報告。
+- `docs/TEMPLATE_CHECKLIST.md` — validation layer。
+- `docs/POLICY_INTERPRETATION_CASES.md` — 判断が割れる場合のadversarial test layer。
 
-ChecklistやInterpretation Casesだけで新しい判断ruleを定義しません。新しい境界が必要になった場合は、まず正本ruleを更新し、検証層を追従させます。
+ChecklistやInterpretation Casesだけで新しい判断ruleを定義しません。通常作業で全Interpretation Casesを事前に読みません。
 
-## 作業モード
+## 条件付きProtocol
 
 - 新規作成 → `docs/CREATE_AND_DEPLOY_FLOW.md` / `docs/BOOTSTRAP_PROTOCOL.md`
-- 通常の機能追加・仕様変更・UI改善 → `docs/FEATURE_CHANGE_PROTOCOL.md`
-- 既存アプリ全体の整理・安定化・引き継ぎ改善 → `docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md` + `docs/EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md`
-- 障害・主要機能停止 → `docs/INCIDENT_RECOVERY_PROTOCOL.md`
-
-必要に応じて中央routing ruleから次へ切り替えます。
-
-- Major Change planning → `docs/MAJOR_CHANGE_PLANNING.md`
+- 通常の修正・機能追加・UI改善 → `docs/FEATURE_CHANGE_PROTOCOL.md`
+- 既存アプリ全体の安全な整備 → `docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md` / `docs/EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md`
+- 大規模整備 → `docs/MAJOR_CHANGE_PLANNING.md` と影響部分のProtocol
 - data / schema / API contract移行 → `docs/DATA_MIGRATION_PROTOCOL.md`
 - environment / Binding / Secret / deployment変更 → `docs/ENVIRONMENT_CHANGE_PROTOCOL.md`
 - 削除・旧互換整理 → `docs/CLEANUP_DELETION_PROTOCOL.md`
 - dependency / runtime更新 → `docs/DEPENDENCY_UPDATE_PROTOCOL.md`
+- 障害・主要機能停止 → `docs/INCIDENT_RECOVERY_PROTOCOL.md`
 
 ## 新規アプリと既存アプリ
 
 新規アプリは `templates/` を共通土台として利用できます。
 
-既存アプリでは、現在の正常動作、data contract、architecture、公開方式をtemplate形状より優先します。templateとの差だけを理由に再構成しません。詳細は `docs/EXISTING_APP_ALIGNMENT_PROTOCOL.md` を参照します。
+既存アプリでは、現在の正常動作、data contract、architecture、公開方式をtemplate形状より優先します。templateとの差だけを理由に再構成しません。
 
-生成アプリのhandoffは必要に応じて次を使用します。
+生成アプリのhandoffには必要に応じて次を使用します。
 
 - `ai-context.json`
 - `llms.txt`
@@ -62,13 +56,8 @@ ChecklistやInterpretation Casesだけで新しい判断ruleを定義しませ�
 - `docs/UI_RULES.md`
 - `docs/PROJECT_STATUS.md`
 
-## テンプレート構成
+GitHub Actionsは標準では使用しません。ローカルのstarter整合確認は次で実行できます。
 
-- `templates/core/`
-- `templates/cloudflare-worker/`
-- `templates/d1/`
-- `templates/sheets-gas/`
-
-これらのdirectory構成は新規アプリ向けであり、既存アプリへの変更要求ではありません。
-
-GitHub Actionsは標準では使用しません。実装方針は `docs/DEVELOPMENT_RULES.md` を参照します。
+```bash
+node tools/verify-template.mjs
+```
