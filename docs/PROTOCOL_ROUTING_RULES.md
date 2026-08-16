@@ -203,6 +203,24 @@ Dynamic scopeは2種類を区別します。
 
 filtered subsetとall records、subsetとsupersetは別scopeです。
 
+### 通常code deliveryのauthorization
+
+ユーザーが特定repository / appへのcode作成・修正・整備を明示的に依頼した場合、依頼差分のcommit、既存の通常branchへの反映、既存deployment経路による公開、反映後verificationは、その依頼を完遂する通常deliveryとして扱えます。
+
+適用条件:
+
+- 対象repository / appが特定されている。
+- 変更はdirect-changeまたはvalid required-propagationに限定される。
+- 既存のmain / deployment経路を使用し、経路自体を変更しない。
+- required verificationが成功している。
+- git history等の通常回復経路がある。
+- user choiceを要する複数方式がない。
+- ユーザーがDraft、PR止まり、未公開、確認後反映を指定していない。
+
+このauthorizationをproduction data・schema・Secret・Binding・permission・domain・外部公開範囲、resource作成・削除、destructive operation、breaking API、auth / storage backend切替へ拡張しません。これらは従来どおりexact fingerprintと個別authorizationを必要とします。
+
+適用条件を満たす通常deliveryでは、Draft PRを作っただけでcurrent taskを完了またはuser-decisionにせず、main / deployment / required production verificationまで進めます。
+
 ## 10. plan単位のauthorization
 
 ユーザーは、複数operationを**1回の承認操作**で許可できます。ただし承認対象は抽象的なplan名ではなく、事前に列挙されたfingerprint集合です。
