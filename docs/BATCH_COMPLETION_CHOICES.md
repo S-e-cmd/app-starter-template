@@ -86,7 +86,7 @@ current task scope内のrequired workが尽き、必須残作業がない場合�
 
 ### user-decision
 
-新しい仕様選択、operation-specific authorization、Production Mutation、destructive operation、必要権限・情報不足等により自動継続できない場合。
+新しい仕様選択、通常delivery authorizationに含まれない高リスクProduction Mutation、destructive operation、必要権限・情報不足等により自動継続できない場合。安全・検証済みの通常code deliveryをmain / 公開先へ反映するだけの場合はuser-decisionにせず、そのまま反映と確認まで進めます。
 
 最低限、未実行operation、停止理由、現実的な選択肢、推奨案と理由を示します。選択肢は現在の停止理由を解消する同じdecision levelに揃えます。
 
@@ -116,5 +116,6 @@ current task scope内のrequired workが尽き、必須残作業がない場合�
 - continueなのに実行可能なnext actionへ進まない。
 - 実行可能なrequired verificationを残して停止する。
 - planning完了をtransform-existing全体のcompleteとする。
+- 安全・検証済みで通常delivery条件を満たすのに、Draft PRまたは反映確認で停止する。
 - user-decisionで停止したのに未実行operation、停止理由、選択肢を示さない。
 - 報告形式やrule遵守の説明を実作業より優先する。
