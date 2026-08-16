@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "schemaVersionMeaning": "app-starter-manifest-schema",
   "name": "app-starter-template",
   "purpose": "Canonical AI-readable starter source for guiding repository creation, populating newly created application repositories, guiding deployment, non-destructive existing-app alignment, post-launch feature changes, high-risk recovery and migration work, and continued maintenance.",
@@ -667,5 +667,32 @@
     "buildCommitAndPublicationMustBeSeparated": true,
     "optionalWorkMustNotJustifyContinue": true,
     "executableRequiredNextActionMustProceed": true
+  },
+  "ordinaryDeliveryAuthorizationPolicy": {
+    "explicitCodeCreationFixOrAlignmentRequestIncludes": [
+      "commit-requested-diff",
+      "merge-through-established-main-path",
+      "deploy-through-established-path",
+      "post-deployment-required-verification"
+    ],
+    "conditions": [
+      "identified-repository-or-app",
+      "direct-change-or-valid-required-propagation-only",
+      "established-branch-and-deployment-path-unchanged",
+      "required-verification-passed",
+      "normal-recovery-path-exists",
+      "no-material-user-choice",
+      "user-did-not-request-pr-only-draft-unpublished-or-confirm-before-release"
+    ],
+    "excluded": [
+      "production-data-or-schema-mutation",
+      "secret-binding-permission-or-domain-change",
+      "resource-creation-or-deletion",
+      "destructive-operation",
+      "breaking-api-change",
+      "auth-or-storage-backend-switch",
+      "deployment-path-change"
+    ],
+    "doNotStopAtDraftOrReleaseConfirmationWhenConditionsPass": true
   }
 }
