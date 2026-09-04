@@ -4,89 +4,42 @@
 
 continuation eligibility、scope、Evidence、authorization、completion stateの意味は `docs/PROTOCOL_ROUTING_RULES.md` を正本とします。
 
-## starter参照時の報告契約
-
-ユーザーが対象repository / appについて `starterを参考に`、`starter準拠`、`templateに則して`、`templateを参考に整備` 等と指定した場合、この文書の報告形式もstarter適用範囲に含みます。
-
-実装・調査ルールだけをstarter準拠にし、報告を自由形式へ戻してはいけません。ユーザーが別形式を明示した場合だけ、その形式を優先します。
-
-作業を実際に行ったbatchの報告は、原則として次の見出しと順序を使用します。見出しを別名へ言い換えたり、複数項目を一つの説明文へ埋め込んだりしません。該当なし・変更なし・対象外の場合も項目自体は残し、その理由を短く記載します。
-
-```text
-Work mode:
-- create-new / align-existing / transform-existing
-
-Direct change:
-- 今回ユーザーが求めた結果そのもの
-
-Evidence:
-- 確認したcurrent behavior / 処理経路 / current contract
-- 原因または変更対象を選んだ根拠
-
-Changes:
-- 実際に行った変更
-
-Required propagation:
-- direct-change成立に不可避な追加変更
-- なしの場合は「なし」
-
-Out of scope / untouched:
-- 今回触れていない重要領域
-- optional candidateをrequired workと混同しない
-
-Verification:
-- 実行したrequired verification
-- 成功 / 失敗 / 未確認 / blockedを区別
-
-Build:
-- 新しいBuild、更新不要、または未完了
-- 更新不要の場合は理由
-
-Commit:
-- commit SHA、未commit、または対象外
-
-公開反映:
-- 確認済み / 未反映 / 対象外 / blocked
-
-Completion state:
-- complete / verification-pending / incomplete
-
-Required remaining work:
-- なし
-または
-- current outcomeに必須な具体的残作業と理由
-
-Next decision:
-- continue / finish / user-decision
-
-Next action:
-- continueの場合だけ、同じturnで実行へ進む具体的対象
-- user-decisionの場合は必要な選択・承認
-- finishの場合は「なし」
-```
-
-この形式はユーザー向けhandoff interfaceです。starter ruleを知っていることの説明、内部用語の講義、作業予定の宣言を、この報告の代わりにしてはいけません。
-
 ## 毎batchの必須報告
 
-上記の各欄は、次の判断情報を明示するために必須です。
+```text
+今回の変更:
+- 実際に行った変更
 
-- 今回の変更
-- 原因・変更根拠
-- required verificationと結果
-- Build、Commit、公開反映
+原因・変更根拠:
+- 確認した処理経路
+- 原因または変更対象を選んだ根拠
+
+確認結果:
+- 実行したrequired verification
+- 成功、失敗、未確認
+
+反映情報:
+- Build:
+- Commit:
+- 公開反映:
+
+今回の依頼の状態:
 - complete / verification-pending / incomplete
-- 必須の残作業、またはなし
+
+必須の残作業:
+- なし
+または
+- 具体的な作業と、それがcurrent outcomeに必須である理由
+
+次の判断:
 - continue / finish / user-decision
-- continueの場合だけ具体的next action
 
-文章は簡潔にしてよいですが、判断情報は省略しません。starter ruleへ従った経緯や内部用語の説明より、作業結果と次の行動を優先します。
+次のアクション:
+- continueの場合だけ具体的な実行対象
+- user-decisionの場合は必要な選択・承認
+```
 
-### 報告より実作業を優先する
-
-報告形式が必須でも、報告だけして停止する理由にはなりません。current task内に安全に実行可能なrequired workが残る場合は、その作業を先に継続し、batchとして区切る時点でこの形式を使用します。
-
-前回報告が形式不備だった場合も、形式を訂正するだけで終了しません。未完了required workが現在も実行可能なら、そのturnで実作業へ復帰します。
+文章は簡潔にしてよいですが、上記の判断情報は省略しません。starter ruleへ従った経緯や内部用語の説明より、作業結果と次の行動を優先します。
 
 ## Build / Commit / 公開反映
 
@@ -95,28 +48,18 @@ runtime、production UI asset、user-visible static config、API response・side
 例:
 
 ```text
-Build:
-- 20260816-03
-
-Commit:
-- abc12345
-
-公開反映:
-- 確認済み
+Build: 20260816-03
+Commit: abc12345
+公開反映: 確認済み
 ```
 
 Build更新対象外でも項目を落としません。
 
 ```text
-Build:
-- 更新不要
-- 理由: docsのみでruntime・UI・API挙動に変更なし
-
-Commit:
-- abc12345
-
-公開反映:
-- 対象外
+Build: 更新不要
+理由: docsのみでruntime・UI・API挙動に変更なし
+Commit: abc12345
+公開反映: 対象外
 ```
 
 build位置が不明ならcurrent app内を確認します。「不明なので省略」にはしません。Build、Commit、公開反映を分離し、未commit、未deployment、古いartifact、cache・配信経路、修正自体の不成立を切り分けられるようにします。
@@ -165,9 +108,6 @@ current task scope内のrequired workが尽き、必須残作業がない場合�
 
 ## 禁止
 
-- starter参照指定があるのに、報告形式だけ自由形式へ戻す。
-- 所定見出しを省略・別名化し、長い説明文の中へ判断情報を埋め込む。
-- Work mode、Direct change、Evidence、Changes、Required propagation、Out of scope / untouched、Verification、Build、Commit、公開反映、Completion state、Required remaining work、Next decision、Next actionを理由なく省略する。
 - Build、Commit、公開反映を省略する。
 - build policy該当変更をBuild更新・確認前にcompleteとする。
 - commit、deploy、HTTP 200、画面表示だけでfunctional successとする。
