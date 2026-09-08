@@ -131,3 +131,28 @@ transform-existingではplanning / implementation / migration / cutover / verifi
 - 判断が合理的に割れる場合: `docs/POLICY_INTERPRETATION_CASES.md`
 
 通常作業の開始時に、該当しないProtocolや全Interpretation Casesを読む必要はありません。
+
+## 9. data flow handoff
+
+新規アプリでは `docs/DATA_FLOW_MAP.md` をhandoffの標準構成に含めます。既存アプリの全体整備・引き継ぎ整備では、同等のdata-flow文書がなければcurrent implementationを実際に追跡して作成し、既にある場合は鮮度を確認します。
+
+目的は「この画面のこの値・状態・操作がどこから来てどこへ行くか」を、次のAIがrepository全体を毎回探索し直さず特定できるようにすることです。
+
+最低限、重要な経路について次を追跡します。
+
+- UI / screen / feature
+- client state / handler
+- API / GAS function / route
+- service / repository / adapter
+- storage / table / sheet / key / external source
+- source of truth
+- derived valueの主要加工・filter・aggregation
+- write targetとside effect
+- refresh / cache / invalidation
+- fallback / stale behavior
+
+固定文言や純粋な装飾まで機械的に網羅する必要はありません。取得元・保存先を誤認すると修正事故につながる表示・状態・操作を優先します。
+
+文書は実装、runtime、設定、authoritative external contract等で確認した内容だけを記載します。未確認は `unknown` とし、file名や命名から推測して埋めません。
+
+data flow、source of truth、write target、derived rule、refresh / cache / fallbackが変わるcode変更では、該当するlocal data-flow文書も同じ変更単位で更新します。文書と実装が食い違う場合はmismatchとして扱い、文書だけを根拠に実装を変更しません。
