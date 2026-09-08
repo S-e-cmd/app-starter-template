@@ -9,12 +9,13 @@
 ユーザーが具体的対象を追加指定していない一般的な整備依頼では、開始時のdefault scopeを次に限定します。
 
 1. current stateとprotected targetsの確認。
-2. current stateを誤認させるrequired documentation / handoff不足の修正。UI表示・状態・操作の取得元、保存先、source of truthが次の作業者に判別できず修正事故につながる場合は、`DATA_FLOW_MAP` または同等文書の不足・陳腐化もここに含める。
+2. current stateを誤認させるrequired documentation / handoff不足の修正。UI表示・状態・操作の取得元、保存先、source of truthが次の作業者に判別できず修正事故につながる場合は、`DATA_FLOW_MAP` または同等文書の不足・陳腐化もここに含める。ただしdata-flow本体の採取はcode整備完了後の専用フェーズで行う。
 3. confirmed Evidenceがあり、現在の保守性・安定性・引き継ぎを直接妨げている具体的問題の修正。
 4. 上記変更に因果的に必要なrequired-propagation。
 5. 今回変更に必要なrequired verification。
 6. build policyに該当する変更がある場合のbuild更新・確認。
-7. `PROJECT_STATUS` 等、今回変更により更新が必要になったcurrent handoffの反映。
+7. code整備完了後、必要なdata-flow handoffをread-onlyで採取・更新する。
+8. `PROJECT_STATUS` 等、今回変更により更新が必要になったcurrent handoffの反映。
 
 次はdefault scopeに含めません。
 
@@ -56,7 +57,38 @@
 
 「コード整理」「責務分離」「追加確認」等の抽象語だけでは不足です。
 
-## 3. 初回batchから通常報告を適用する
+## 3. code整備とdata-flow採取の強制分離
+
+一般的な既存アプリ整備で `DATA_FLOW_MAP` または同等文書を作る場合、次をhard gateとします。
+
+### data-flow採取へ進める条件
+
+- current scope内の非破壊なcode整備が完了している。
+- valid required-propagationが完了している。
+- 実行可能なrequired verificationが完了している。
+- build requiredならbuild更新・確認が完了している。
+- 採取対象のimplementationが途中変更状態ではない。
+
+これらを満たす前に、完成版のdata-flow一覧を作成しません。
+
+### data-flow採取フェーズの禁止事項
+
+data-flow採取開始後は、次を変更してはいけません。
+
+- application code。
+- runtime設定・environment。
+- route / API contract。
+- storage behavior / schema / data。
+- fallback / cache / refresh behavior。
+- handler / service / repository責務。
+
+このフェーズで許可される変更は、`DATA_FLOW_MAP` または同等handoff文書と、それを参照するために直接必要な文書上の参照だけです。
+
+重複経路、誤配線、不自然なfallback、責務混在、古い経路、複数source等を発見しても、採取中には直しません。**経路一覧作成と正常化は別作業です。** まずcurrent implementationをそのまま記録し、改善が必要なら別変更候補として扱います。
+
+採取開始後にcode変更が必要になった場合はdata-flow採取を中断し、変更・verification・build確認を完了してimplementationを再固定した後、影響経路を再採取します。
+
+## 4. 初回batchから通常報告を適用する
 
 初回batchだけ自由形式にしません。最初の変更を行ったturnから `docs/BATCH_COMPLETION_CHOICES.md` の報告形式を適用し、最低限次を区別できる情報を示します。
 
@@ -71,7 +103,7 @@
 
 項目名の文字列ではなく、反映経路、必須作業と任意候補、継続・終了判断をユーザーが識別できることをhard gateとします。Build、Commit、公開反映を混同または省略しません。
 
-## 4. Buildはcompletion hard gate
+## 5. Buildはcompletion hard gate
 
 build policyに該当する変更が1つでもある場合、**build更新とその確認が完了するまで overall `complete` にしてはいけません。**
 
@@ -94,7 +126,7 @@ build policyに該当する変更が1つでもある場合、**build更新とそ
 - runtime変更後に旧build番号のままcompleteにする。
 - build更新を「次batch候補」へ回す。
 
-## 5. 初回整備での停止条件
+## 6. 初回整備での停止条件
 
 一般的な「整備して」という依頼は、default scope内の通常・非破壊整備を実行するauthorizationとして扱えます。ただし、次は既存の中央ruleどおり別途停止・routingします。
 
@@ -107,7 +139,7 @@ build policyに該当する変更が1つでもある場合、**build更新とそ
 
 逆に、これらに該当しないdefault scope内のrequired workについて、毎batchユーザー確認を要求して停止しません。
 
-## 6. completion判定順
+## 7. completion判定順
 
 batch終了時は、次の順で判定します。
 
@@ -115,14 +147,16 @@ batch終了時は、次の順で判定します。
 2. valid required-propagationは完了したか。
 3. 実行可能なrequired verificationは完了したか。
 4. build policy該当時、build更新・確認は完了したか。
-5. current handoffのrequired updateは完了したか。該当する場合、`DATA_FLOW_MAP` または同等文書もcurrent implementationと一致しているか。
-6. 残っているものはrequired workか、optional candidateか。
-7. required workが残る場合のみ `continue`。
-8. required workがなく、残りがoptionalなら `finish`。
+5. data-flow handoffがrequiredなら、code整備完了後のread-only採取として完了したか。
+6. data-flow採取中にcodeやruntimeを変更していないか。
+7. current handoffのrequired updateは完了したか。
+8. 残っているものはrequired workか、optional candidateか。
+9. required workが残る場合のみ `continue`。
+10. required workがなく、残りがoptionalなら `finish`。
 
 maintenance needや改善余地の大きさを、この順序より先に置きません。
 
-## 7. 代表的な誤判定
+## 8. 代表的な誤判定
 
 ### Case A: さらに分割できる
 
@@ -157,12 +191,26 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 - current scope内にconfirmedな具体的整備itemが残っている。
 
 正解:
-- 初回報告を所定形式で出し、具体的unfinished itemを示して `continue`。
+- code整備を先に完了し、data-flow採取はその後に行う。
 
 誤り:
-- 「starter準拠完了」で終了。
+- code整備途中の状態で `DATA_FLOW_MAP` を完成させる。
 
-### Case D: optional issueを発見
+### Case D: data-flow採取中に重複経路を発見
+
+状態:
+- current implementationに同じ目的の経路が複数存在する。
+- 片方が不要に見える。
+
+正解:
+- 両方をcurrent flowとして記録する。
+- 必要なら改善候補として残す。
+- data-flow採取フェーズでは変更しない。
+
+誤り:
+- 一覧を綺麗にするため片方を削除・統合してから記載する。
+
+### Case E: optional issueを発見
 
 状態:
 - current scopeは完了。
@@ -174,7 +222,7 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 誤り:
 - 発見したこと自体を理由にcurrent taskへ追加してcontinue。
 
-## 8. 最終セルフチェック
+## 9. 最終セルフチェック
 
 既存アプリ整備の各batch終了前に、最低限次を確認します。
 
@@ -184,7 +232,9 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 - [ ] 初回batchでも報告項目を省略していない。
 - [ ] build policy該当有無を判定した。
 - [ ] build requiredなら更新・確認前にcompleteにしていない。
-- [ ] UI表示・状態・操作の取得元や保存先が重要なアプリでは、`DATA_FLOW_MAP` または同等文書の有無・鮮度を確認した。
-- [ ] data-flow handoffを更新した場合、template例や推測ではなくcurrent implementationを追跡した内容になっている。
+- [ ] data-flow採取はcode整備・required verification完了後に開始した。
+- [ ] data-flow採取中にapplication code / runtime / data / route / storage behaviorを変更していない。
+- [ ] 重複・誤配線・不自然なfallback等を採取中に正常化していない。
+- [ ] data-flow handoffはtemplate例や理想構成ではなく、安定したcurrent implementationをそのまま追跡した内容になっている。
 - [ ] 実行可能なrequired verificationを残していない。
 - [ ] current scope完了後に探索を自己増殖させていない。
