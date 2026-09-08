@@ -6,6 +6,18 @@ Build: `YYYYMMDD-NN`
 
 `ARCHITECTURE.md` は責務配置、`DATA_CONTRACT.md` は保存形式・API契約、この文書は **実際の値・状態・操作がUIから正本までどう流れるか** を記録します。
 
+## この作業の位置づけ
+
+`DATA_FLOW_MAP` の作成・更新は、code整理・正常化・refactorとは別フェーズです。
+
+- 一般的な既存アプリ整備では、まずcurrent scope内の非破壊なcode整備・required verificationを完了し、対象実装が安定した後にdata-flow採取へ移る。
+- data-flow採取フェーズでは、code、runtime設定、data、route、API contract、storage、fallback等の挙動を変更しない。許可される変更はdata-flow handoff文書そのものと、それに直接必要な文書上の参照だけとする。
+- 経路に重複、誤配線、不要に見えるfallback、責務混在、古い経路等を発見しても、採取中には修正・統合・削除・正常化しない。存在するcurrent flowとしてそのまま記録する。
+- 発見した問題は `Unknown / Mismatch` または別の改善候補として記録し、正常化はdata-flow採取完了後の別変更として扱う。
+- data-flow採取開始後に実装変更が必要になった場合、その採取結果を途中状態の正本として扱わない。変更を完了・検証して状態を再固定した後、影響経路を再採取する。
+
+目的は「正しい形へ直しながら図を書く」ことではなく、**安定したcurrent implementationを観測し、そのまま経路一覧へ写すこと**です。
+
 ## 記載原則
 
 - 実装、設定、runtime、外部resourceを実際に確認して記載する。推測で埋めない。
@@ -14,7 +26,7 @@ Build: `YYYYMMDD-NN`
 - Secret、credential、private identifier、個人情報、internal-only URLなど公開不適切な実値は書かない。
 - 同じ値でもread経路とwrite経路が異なる場合は分けて記載する。
 - derived valueは「どこから取得したか」だけでなく、主要な加工・集計・filter・fallbackも記載する。
-- code変更で経路、正本、加工、更新契機、fallback、cacheが変わった場合はcodeと同じ変更単位で更新する。
+- code変更で経路、正本、加工、更新契機、fallback、cacheが変わった場合は、code変更とverificationを先に完了し、その後のdata-flow採取フェーズでこの文書を更新する。
 - 表が巨大になる場合はfeature / screen単位で分割してよい。その場合この文書を索引として分割先を列挙する。
 
 ## Source of Truth Map
@@ -107,7 +119,7 @@ Writeがある場合:
 |---|---|---|---|---|---|
 | 例 | `unknown` | `unknown` | `unknown` | `unknown` | `unknown` |
 
-silent fallbackは禁止です。既存fallbackがある場合は、発動条件と代替sourceを明記します。
+silent fallbackは禁止です。既存fallbackがある場合は、発動条件と代替sourceを明記します。既存fallbackが望ましくないと判断しても、この採取フェーズでは変更しません。
 
 ## External Boundaries
 
@@ -122,6 +134,8 @@ Secret値やprivate resource identifierそのものは記載しません。
 ## Unknown / Mismatch
 
 文書と実装、実装とruntime、複数source間で食い違いがある場合は、都合よくどちらかへ寄せずここへ残します。
+
+また、重複経路、誤配線の疑い、不要に見えるfallback、複数正本の疑い等を見つけても、ここへ観測結果として残し、data-flow採取フェーズ中には正常化しません。
 
 | Item | Documentation says | Implementation / Runtime says | Evidence state | Impact / Next verification |
 |---|---|---|---|---|
@@ -139,4 +153,4 @@ Secret値やprivate resource identifierそのものは記載しません。
 - fallback追加・変更・削除
 - user actionの保存先やside effect変更
 
-影響がなければ更新不要です。影響があるのにcodeだけ変更してこの文書を古いまま残した状態は、handoff更新が必要な作業では完了扱いにしません。
+影響がなければ更新不要です。影響がある場合は、code変更とrequired verificationを完了して状態を固定した後、別フェーズとして影響経路を再採取します。code変更と経路正常化をしながら同時にこの文書を作る運用は禁止します。
