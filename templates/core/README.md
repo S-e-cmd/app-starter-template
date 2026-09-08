@@ -19,6 +19,7 @@
 - `styles/responsive.css`
 - `docs/ARCHITECTURE.md`
 - `docs/DATA_CONTRACT.md`
+- `docs/DATA_FLOW_MAP.md`
 - `docs/UI_RULES.md`
 - `docs/PROJECT_STATUS.md`
 - `ai-context.json`
@@ -44,5 +45,7 @@
 ## 継続ルール
 
 機能追加や構造変更後も `ai-context.json` と `docs/` を最新状態に維持してください。新しい責務は既存巨大ファイルへの追記ではなく適切なモジュールへ分離し、コードだけを更新して引き継ぎ情報を古いまま残した状態は完了扱いにしません。
+
+`docs/DATA_FLOW_MAP.md` は、画面・操作からAPI、service、repository、storage、外部sourceまでの実経路を逆引きするための索引です。data source、write target、derived value、refresh / cache / fallback等の経路が変わる変更では、実装を確認した上で同じ変更単位で更新します。未確認箇所を推測で埋めません。
 
 GitHub Actionsは標準では使用しません。
