@@ -33,6 +33,7 @@ templateとの一致そのものは完了条件ではありません。
 - `continue` に具体的unfinished itemを要求すること。
 - 初回batchから報告項目を省略しないこと。
 - build policy該当時にbuild更新・確認をcompletion hard gateとすること。
+- code整備フェーズとdata-flow採取フェーズを分離し、採取中のcode変更を禁止すること。
 
 `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` は中央ruleを上書きせず、既存アプリ整備での誤適用を防ぐ実行gateです。
 
@@ -86,27 +87,49 @@ current scopeに必要な範囲で次を確認します。
 
 required documentation fixはcurrent scopeに含まれる場合に修正します。optional noteだけを理由に整備scopeを拡大しません。
 
+## 整備とdata-flow採取を分離する
+
+一般的な既存アプリ整備では、code整備と経路一覧作成を同時進行させません。
+
+標準順序は次です。
+
+1. current stateとprotected targetsを確認する。
+2. current scope内の非破壊なcode整備・handoff修正・required-propagationを実施する。
+3. required verificationとbuild確認を完了し、整備対象のimplementationを安定させる。
+4. **implementation freeze** としてdata-flow採取フェーズへ移る。
+5. data-flow採取フェーズではread-onlyでcurrent implementationを追跡し、`DATA_FLOW_MAP` または同等文書だけを更新する。
+6. 採取中に重複、誤配線、責務混在、古い経路、不要に見えるfallback等を発見しても、その場では修正・統合・削除・正常化しない。
+7. 発見事項はcurrent flowとして記録し、必要なら別の改善候補・mismatchとして残す。正常化はdata-flow採取完了後の別変更として扱う。
+
+「経路一覧を作りながら正しい構成へ直す」ことは禁止します。経路一覧は、良し悪しに関係なく、採取時点のcurrent implementationをそのまま写すためのものです。
+
+data-flow採取開始後にcode変更が必要になった場合は、採取を中断します。変更とverificationを完了してimplementationを再固定した後、影響経路を再採取します。途中状態の経路一覧をcurrent handoffとして完成扱いにしません。
+
 ## 整備の優先順
 
 1. current stateと保護対象を確認する。
-2. current scopeに必要なhandoff不足を修正する。
-3. current architecture / data contract / data flow / UI制約 / project statusを必要な範囲で更新する。
+2. current scopeに必要なhandoff不足を修正する。ただしdata-flow本体の採取・更新はcode整備後の専用フェーズへ送る。
+3. current architecture / data contract / UI制約 / project statusを必要な範囲で更新する。
 4. current scope内で具体的に確認された責務混在だけ段階整理する。
-5. 将来候補は記録し、current taskへ自動追加しない。
-6. 削除が必要なら `CLEANUP_DELETION_PROTOCOL.md` へroutingする。
+5. required verificationとbuild確認を完了してimplementationを固定する。
+6. 必要な `DATA_FLOW_MAP` または同等data-flow文書をread-onlyで採取・更新する。
+7. 将来候補は記録し、current taskへ自動追加しない。
+8. 削除が必要なら `CLEANUP_DELETION_PROTOCOL.md` へroutingする。
 
-「さらに分割できる」「もっと整理できる」「追加確認できる」は5の将来候補であり、それだけでは4のunfinished workになりません。
+「さらに分割できる」「もっと整理できる」「追加確認できる」は7の将来候補であり、それだけでは4のunfinished workになりません。
 
 ## 1batchの標準手順
 
 1. 今回扱う具体的対象を決める。
 2. current implementationと保護対象を確認する。
-3. 必要最小限の整備を実施する。
+3. 必要最小限のcode整備を実施する。
 4. `DEVELOPMENT_RULES.md` と中央verification ruleで確認する。
-5. build policy該当時はbuild更新・確認を完了する。未完了ならcompleteにしない。
-6. `docs/PROJECT_STATUS.md` にcurrent state、今回変更、verified / blocked、残taskを反映する。
-7. 中央ruleと `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` でbatch completion、current task completion、continuation eligibilityを判定する。
-8. `BATCH_COMPLETION_CHOICES.md` の形式で初回batchからdecisionを報告し、継続可能なら具体的next batchへ進む。
+5. build policy該当時はbuild更新・確認を完了する。未完了ならdata-flow採取へ進まない。
+6. code整備フェーズの必須作業が完了したことを確認する。
+7. data-flow handoffがrequiredなら、ここで初めてread-onlyのdata-flow採取フェーズへ移る。このフェーズではcode・runtime・data・設定・route・API contract・storage behaviorを変更しない。
+8. `docs/PROJECT_STATUS.md` にcurrent state、今回変更、verified / blocked、残taskを反映する。
+9. 中央ruleと `EXISTING_APP_ALIGNMENT_EXECUTION_GATE.md` でbatch completion、current task completion、continuation eligibilityを判定する。
+10. `BATCH_COMPLETION_CHOICES.md` の形式で初回batchからdecisionを報告し、継続可能なら具体的next batchへ進む。
 
 不具合修正と無関係な大規模refactorを同じbatchへ混在させません。
 
@@ -134,7 +157,9 @@ required documentation fixはcurrent scopeに含まれる場合に修正しま�
 - `docs/UI_RULES.md`
 - `docs/PROJECT_STATUS.md`
 
-`DATA_FLOW_MAP` はtemplateの例をそのまま置くのではなく、current implementationを実際に追跡して記載します。特に、UI / screen / featureからclient state / handler、API / GAS function / route、service / repository / adapter、storage / table / sheet / key / external source、source of truthまでのread / write経路を、保守上重要な範囲で逆引きできる状態にします。derived value、refresh / cache / invalidation、fallback / stale behaviorがある場合も、確認できた実装だけを記録し、未確認を推測で埋めません。
+`DATA_FLOW_MAP` はtemplateの例をそのまま置くのではなく、code整備・required verification完了後の安定したcurrent implementationをread-onlyで追跡して記載します。特に、UI / screen / featureからclient state / handler、API / GAS function / route、service / repository / adapter、storage / table / sheet / key / external source、source of truthまでのread / write経路を、保守上重要な範囲で逆引きできる状態にします。derived value、refresh / cache / invalidation、fallback / stale behaviorがある場合も、確認できた実装だけを記録し、未確認を推測で埋めません。
+
+重複・誤配線・不自然なfallback等を見つけても、`DATA_FLOW_MAP` 作成中に正常化しません。まず現状の経路をそのまま記録し、正常化が必要なら別変更として扱います。
 
 既存アプリに `ai-context.json` がないことだけを理由に、新規アプリとして再bootstrapしません。
 
