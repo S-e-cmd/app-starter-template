@@ -16,6 +16,7 @@
 6. build policyに該当する変更がある場合のbuild更新・確認。
 7. code整備完了後、必要なdata-flow handoffをread-onlyで採取・更新する。
 8. `PROJECT_STATUS` 等、今回変更により更新が必要になったcurrent handoffの反映。
+9. `PROTOCOL_ROUTING_RULES.md` の「通常code deliveryのauthorization」が成立する場合、既存の通常integration / deployment経路へ反映し、必要な反映後verificationまで完了する。
 
 既存の `DATA_FLOW_MAP` または同等文書が存在しても、それだけで7を満たしたとは扱いません。次のいずれかに該当する場合は、application codeが今回変わっていなくても、現在の実装とread-onlyで照合して鮮度を確認します。
 
@@ -150,14 +151,23 @@ build policyに該当する変更が1つでもある場合、**build更新とそ
 
 ## 6. 初回整備での停止条件
 
-一般的な「整備して」という依頼は、default scope内の通常・非破壊整備を実行するauthorizationとして扱えます。ただし、次は既存の中央ruleどおり別途停止・routingします。
+一般的な「整備して」という依頼は、default scope内の通常・非破壊整備と、`PROTOCOL_ROUTING_RULES.md` の条件を満たす通常code deliveryを実行するauthorizationとして扱えます。
 
-- Production Mutation。
+**既存の通常delivery経路がmain反映や既存自動deployを含むことだけを理由に、PR作成後で停止してはいけません。** deployment方式・target・Binding・Secret等を変更せず、current appで通常使われているintegration / deployment経路をそのまま通すだけなら、中央ruleの「通常code deliveryのauthorization」を適用します。
+
+したがって、ユーザーがPR止まり・Draft・未公開・確認後反映等を指定していない通常の「整備して」では、branch / PRを安全な作業手段として使うことはできますが、**PR作成そのものをrequired outcomeや完了条件にしません。** merge可能でrequired verificationが済み、通常delivery条件を満たすなら、main / deployment / required production verificationまで継続します。
+
+ただし、次は既存の中央ruleどおり別途停止・routingします。
+
+- production実data / schema / permission等のProduction Mutation。
 - destructive operation。
 - data / schema / API contract migration。
-- environment / Secret / Binding / deployment target変更。
+- environment / Secret / Binding / deployment target・deployment方式の変更。
+- 公開URL / domain / auth / storage backend等のcontract切替。
 - Major Change Planningが必要な方式選択。
 - current scopeを明確に超える新機能・別問題修正。
+
+既存自動deployが動くという事実だけでは「deployment方式の変更」には該当しません。既存delivery経路を使用して依頼済みcodeを反映することと、deployment設定そのものを変更することを区別します。
 
 逆に、これらに該当しないdefault scope内のrequired workについて、毎batchユーザー確認を要求して停止しません。
 
@@ -173,9 +183,10 @@ batch終了時は、次の順で判定します。
 6. 既存data-flow文書を再利用した場合、存在だけでcurrent扱いせず、current implementationとの一致を実査したか。
 7. data-flow採取中にcodeやruntimeを変更していないか。
 8. current handoffのrequired updateは完了したか。
-9. 残っているものはrequired workか、optional candidateか。
-10. required workが残る場合のみ `continue`。
-11. required workがなく、残りがoptionalなら `finish`。
+9. 通常code deliveryのauthorizationが成立する場合、PR / branch止まりではなく既存integration経路への反映とrequired post-deployment verificationまで完了したか。
+10. 残っているものはrequired workか、optional candidateか。
+11. required workが残る場合のみ `continue`。
+12. required workがなく、残りがoptionalなら `finish`。
 
 maintenance needや改善余地の大きさを、この順序より先に置きません。
 
@@ -259,6 +270,22 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 誤り:
 - 発見したこと自体を理由にcurrent taskへ追加してcontinue。
 
+### Case G: 整備変更をPRに置いただけ
+
+状態:
+- ユーザーは対象repositoryを指定して通常の「整備して」と依頼した。
+- direct-change、build、verification、data-flow更新は完了した。
+- 既存main / deployment経路は変更していない。
+- PRはmerge可能。
+- ユーザーはPR止まり、Draft、未公開、確認後反映を指定していない。
+
+正解:
+- PRは作業手段として利用可能だが、そこで停止しない。
+- 中央ruleの通常code delivery authorizationに従い、main / 既存deployment経路へ反映し、required verificationまで進める。
+
+誤り:
+- 「mainへmergeすると既存自動公開が動く可能性があるため未実施」とだけ報告してユーザーへmerge作業を返す。
+
 ## 9. 最終セルフチェック
 
 既存アプリ整備の各batch終了前に、最低限次を確認します。
@@ -275,5 +302,7 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 - [ ] data-flow採取中にapplication code / runtime / data / route / storage behaviorを変更していない。
 - [ ] 重複・誤配線・不自然なfallback等を採取中に正常化していない。
 - [ ] data-flow handoffはtemplate例や理想構成ではなく、安定したcurrent implementationをそのまま追跡した内容になっている。
+- [ ] 通常code delivery authorizationが成立するのに、PR / branch作成だけで作業完了扱いしていない。
+- [ ] 既存自動deployがあることだけを理由にmain反映をユーザーへ丸投げしていない。
 - [ ] 実行可能なrequired verificationを残していない。
 - [ ] current scope完了後に探索を自己増殖させていない。
