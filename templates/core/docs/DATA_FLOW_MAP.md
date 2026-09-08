@@ -15,6 +15,7 @@ Build: `YYYYMMDD-NN`
 - 経路に重複、誤配線、不要に見えるfallback、責務混在、古い経路等を発見しても、採取中には修正・統合・削除・正常化しない。存在するcurrent flowとしてそのまま記録する。
 - 発見した問題は `Unknown / Mismatch` または別の改善候補として記録し、正常化はdata-flow採取完了後の別変更として扱う。
 - data-flow採取開始後に実装変更が必要になった場合、その採取結果を途中状態の正本として扱わない。変更を完了・検証して状態を再固定した後、影響経路を再採取する。
+- code変更とdata-flow更新は同じchange unit / completion scopeに含めてよいが、**同じediting phaseでは行わない**。先にcode変更を完成・検証し、その後にread-only採取へ切り替える。
 
 目的は「正しい形へ直しながら図を書く」ことではなく、**安定したcurrent implementationを観測し、そのまま経路一覧へ写すこと**です。
 
@@ -27,6 +28,8 @@ Build: `YYYYMMDD-NN`
 - 同じ値でもread経路とwrite経路が異なる場合は分けて記載する。
 - derived valueは「どこから取得したか」だけでなく、主要な加工・集計・filter・fallbackも記載する。
 - code変更で経路、正本、加工、更新契機、fallback、cacheが変わった場合は、code変更とverificationを先に完了し、その後のdata-flow採取フェーズでこの文書を更新する。
+- 既存の `DATA_FLOW_MAP` がある場合、経路変更と無関係な部分まで毎回全面再採取する必要はない。今回の変更で影響を受けた経路と、その経路の前後で整合性確認が必要な境界だけを再採取する。
+- 影響範囲を推測だけで狭めない。変更したUI/state/handler/API/service/repository/storage/source of truth/derived value/cache/fallback/side effectから、実際に接続する前後の境界を確認して再採取範囲を決める。
 - 表が巨大になる場合はfeature / screen単位で分割してよい。その場合この文書を索引として分割先を列挙する。
 
 ## Source of Truth Map
@@ -153,4 +156,20 @@ Secret値やprivate resource identifierそのものは記載しません。
 - fallback追加・変更・削除
 - user actionの保存先やside effect変更
 
-影響がなければ更新不要です。影響がある場合は、code変更とrequired verificationを完了して状態を固定した後、別フェーズとして影響経路を再採取します。code変更と経路正常化をしながら同時にこの文書を作る運用は禁止します。
+### 経路変更後の更新手順
+
+上記に該当するcode変更では、次の順序をcompletion gateとします。
+
+1. code変更を完了する。
+2. required verificationを完了する。
+3. build policy該当時はbuild更新・確認を完了する。
+4. implementationを固定する。
+5. 今回の変更で影響を受けた経路と、その前後の接続境界だけをread-onlyで再採取する。
+6. 実際に確認した最終経路へ `DATA_FLOW_MAP` を更新する。
+7. data-flow更新後にcode側を再変更しない。追加code変更が必要になった場合は採取を中断し、1からやり直す。
+
+影響のない経路は再採取不要です。ただし、変更した責務の前後で接続先が変わっている可能性がある場合は、その境界まで確認します。
+
+**same change unit / same completion scope であっても、same editing phaseではありません。** code変更をしながら経路表を書き換えたり、経路表を見ながらその場で正常化したりする運用は禁止します。
+
+影響がなければ更新不要です。影響があるのにcodeだけ変更して古い経路表を残した状態は、handoff更新がrequiredな作業では完了扱いにしません。
