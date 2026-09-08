@@ -17,6 +17,16 @@
 7. code整備完了後、必要なdata-flow handoffをread-onlyで採取・更新する。
 8. `PROJECT_STATUS` 等、今回変更により更新が必要になったcurrent handoffの反映。
 
+既存の `DATA_FLOW_MAP` または同等文書が存在しても、それだけで7を満たしたとは扱いません。次のいずれかに該当する場合は、application codeが今回変わっていなくても、現在の実装とread-onlyで照合して鮮度を確認します。
+
+- 現行starterのdata-flow採取ルール導入前に作成された。
+- どの実装を根拠に採取したか確認できない。
+- source / write target / fallback / cache / side effect等の主要経路を実査した記録がない。
+- current implementationとの一致を最後に確認した時点が不明。
+- 文書内容に複数sourceの欠落、過度な単純化、理想構成への寄せ等の疑いがある。
+
+「codeが変わっていない」ことだけを理由に既存data-flow文書をcurrent扱いしてはいけません。
+
 次はdefault scopeに含めません。
 
 - さらに責務分離できる箇所。
@@ -70,6 +80,18 @@
 - 採取対象のimplementationが途中変更状態ではない。
 
 これらを満たす前に、完成版のdata-flow一覧を作成しません。
+
+### 既存data-flow文書の鮮度確認
+
+既存の `DATA_FLOW_MAP` または同等文書を再利用する場合は、存在確認ではなくimplementationとの一致確認を行います。
+
+- current implementationから代表的かつ保守上重要なread / write経路を逆引きし、文書に同じsource、handler、API / function、storage / external source、side effectが記録されているか確認する。
+- LocalStorage / table / sheet / key / external sourceが複数ある場合、主要なものが1つに単純化されていないか確認する。
+- UI上の説明と実際のwrite pathが異なる等、挙動上重要な経路は文言ではなく実装を優先して確認する。
+- fallback / cache / refresh / derived value / side effectの存在が保守判断に影響する場合、文書に反映されているか確認する。
+- 旧ルール作成、採取根拠不明、精度未確認の場合は、code変更の有無に関係なくread-only再採取を行う。
+
+一致確認をせずに「application implementation did not change, therefore DATA_FLOW_MAP is current」と判断することは禁止します。
 
 ### data-flow採取フェーズの禁止事項
 
@@ -148,11 +170,12 @@ batch終了時は、次の順で判定します。
 3. 実行可能なrequired verificationは完了したか。
 4. build policy該当時、build更新・確認は完了したか。
 5. data-flow handoffがrequiredなら、code整備完了後のread-only採取として完了したか。
-6. data-flow採取中にcodeやruntimeを変更していないか。
-7. current handoffのrequired updateは完了したか。
-8. 残っているものはrequired workか、optional candidateか。
-9. required workが残る場合のみ `continue`。
-10. required workがなく、残りがoptionalなら `finish`。
+6. 既存data-flow文書を再利用した場合、存在だけでcurrent扱いせず、current implementationとの一致を実査したか。
+7. data-flow採取中にcodeやruntimeを変更していないか。
+8. current handoffのrequired updateは完了したか。
+9. 残っているものはrequired workか、optional candidateか。
+10. required workが残る場合のみ `continue`。
+11. required workがなく、残りがoptionalなら `finish`。
 
 maintenance needや改善余地の大きさを、この順序より先に置きません。
 
@@ -210,7 +233,21 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 誤り:
 - 一覧を綺麗にするため片方を削除・統合してから記載する。
 
-### Case E: optional issueを発見
+### Case E: 既存DATA_FLOW_MAPがあるが採取精度未確認
+
+状態:
+- application codeは今回変更していない。
+- `DATA_FLOW_MAP` は存在する。
+- 旧ルールで作成された、またはcurrent implementationとの一致確認履歴がない。
+
+正解:
+- code未変更でもread-onlyで実装と照合する。
+- 欠落や誤記があればdata-flow文書だけを修正する。
+
+誤り:
+- 「codeが変わっていないので既存DATA_FLOW_MAPはcurrent」として確認を省略する。
+
+### Case F: optional issueを発見
 
 状態:
 - current scopeは完了。
@@ -233,6 +270,8 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 - [ ] build policy該当有無を判定した。
 - [ ] build requiredなら更新・確認前にcompleteにしていない。
 - [ ] data-flow採取はcode整備・required verification完了後に開始した。
+- [ ] 既存data-flow文書を使う場合、存在だけでcurrent扱いせずcurrent implementationとの一致を実査した。
+- [ ] 「codeが変わっていない」だけをdata-flow鮮度確認の代わりにしていない。
 - [ ] data-flow採取中にapplication code / runtime / data / route / storage behaviorを変更していない。
 - [ ] 重複・誤配線・不自然なfallback等を採取中に正常化していない。
 - [ ] data-flow handoffはtemplate例や理想構成ではなく、安定したcurrent implementationをそのまま追跡した内容になっている。
