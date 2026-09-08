@@ -70,6 +70,7 @@ current scopeに必要な範囲で次を確認します。
 - 主要機能・現在の責務境界。
 - API / storage / auth / deploymentのcurrent contract。
 - `ai-context.json` / `llms.txt` / `docs/*` の有無と鮮度。
+- UI表示・状態・操作について、取得元や保存先の誤認が保守事故につながる場合は、既存の `DATA_FLOW_MAP` または同等文書の有無と鮮度。
 - 公開runtime確認が今回の目的に必要なら実際の表示・主要動作。
 
 文書と実装・runtimeが食い違う場合の扱いは中央ruleに従います。
@@ -89,7 +90,7 @@ required documentation fixはcurrent scopeに含まれる場合に修正しま�
 
 1. current stateと保護対象を確認する。
 2. current scopeに必要なhandoff不足を修正する。
-3. current architecture / data contract / UI制約 / project statusを必要な範囲で更新する。
+3. current architecture / data contract / data flow / UI制約 / project statusを必要な範囲で更新する。
 4. current scope内で具体的に確認された責務混在だけ段階整理する。
 5. 将来候補は記録し、current taskへ自動追加しない。
 6. 削除が必要なら `CLEANUP_DELETION_PROTOCOL.md` へroutingする。
@@ -129,8 +130,11 @@ required documentation fixはcurrent scopeに含まれる場合に修正しま�
 - `llms.txt`
 - `docs/ARCHITECTURE.md`
 - `docs/DATA_CONTRACT.md`
+- `docs/DATA_FLOW_MAP.md` または同等の既存data-flow文書
 - `docs/UI_RULES.md`
 - `docs/PROJECT_STATUS.md`
+
+`DATA_FLOW_MAP` はtemplateの例をそのまま置くのではなく、current implementationを実際に追跡して記載します。特に、UI / screen / featureからclient state / handler、API / GAS function / route、service / repository / adapter、storage / table / sheet / key / external source、source of truthまでのread / write経路を、保守上重要な範囲で逆引きできる状態にします。derived value、refresh / cache / invalidation、fallback / stale behaviorがある場合も、確認できた実装だけを記録し、未確認を推測で埋めません。
 
 既存アプリに `ai-context.json` がないことだけを理由に、新規アプリとして再bootstrapしません。
 
