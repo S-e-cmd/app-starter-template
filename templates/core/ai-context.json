@@ -24,6 +24,7 @@
   "docs": {
     "architecture": "docs/ARCHITECTURE.md",
     "dataContract": "docs/DATA_CONTRACT.md",
+    "dataFlowMap": "docs/DATA_FLOW_MAP.md",
     "uiRules": "docs/UI_RULES.md",
     "projectStatus": "docs/PROJECT_STATUS.md"
   },
