@@ -9,7 +9,7 @@
 ユーザーが具体的対象を追加指定していない一般的な整備依頼では、開始時のdefault scopeを次に限定します。
 
 1. current stateとprotected targetsの確認。
-2. current stateを誤認させるrequired documentation / handoff不足の修正。
+2. current stateを誤認させるrequired documentation / handoff不足の修正。UI表示・状態・操作の取得元、保存先、source of truthが次の作業者に判別できず修正事故につながる場合は、`DATA_FLOW_MAP` または同等文書の不足・陳腐化もここに含める。
 3. confirmed Evidenceがあり、現在の保守性・安定性・引き継ぎを直接妨げている具体的問題の修正。
 4. 上記変更に因果的に必要なrequired-propagation。
 5. 今回変更に必要なrequired verification。
@@ -115,7 +115,7 @@ batch終了時は、次の順で判定します。
 2. valid required-propagationは完了したか。
 3. 実行可能なrequired verificationは完了したか。
 4. build policy該当時、build更新・確認は完了したか。
-5. current handoffのrequired updateは完了したか。
+5. current handoffのrequired updateは完了したか。該当する場合、`DATA_FLOW_MAP` または同等文書もcurrent implementationと一致しているか。
 6. 残っているものはrequired workか、optional candidateか。
 7. required workが残る場合のみ `continue`。
 8. required workがなく、残りがoptionalなら `finish`。
@@ -184,5 +184,7 @@ maintenance needや改善余地の大きさを、この順序より先に置き�
 - [ ] 初回batchでも報告項目を省略していない。
 - [ ] build policy該当有無を判定した。
 - [ ] build requiredなら更新・確認前にcompleteにしていない。
+- [ ] UI表示・状態・操作の取得元や保存先が重要なアプリでは、`DATA_FLOW_MAP` または同等文書の有無・鮮度を確認した。
+- [ ] data-flow handoffを更新した場合、template例や推測ではなくcurrent implementationを追跡した内容になっている。
 - [ ] 実行可能なrequired verificationを残していない。
 - [ ] current scope完了後に探索を自己増殖させていない。
